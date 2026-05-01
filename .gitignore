@@ -1,0 +1,10 @@
+# Java / Maven
+api/target/
+
+# Node / Vite
+client/node_modules/
+client/dist/
+
+# IDE / OS
+.DS_Store
+Thumbs.db
