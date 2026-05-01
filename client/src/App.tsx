@@ -1,45 +1,115 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 
 type Book = {
   id: number
+  isbn: string
   title: string
   author: string
   subject: string
   issued: boolean
+  totalCopies: number
+  availableCopies: number
 }
 
 type Borrower = {
   id: number
   name: string
   address: string
-  phoneNumber: number
+  phoneNumber: string
   borrowedBooksCount: number
   onHoldBooksCount: number
 }
 
+type User = {
+  userId: number
+  username: string
+  fullName: string
+  role: 'ADMIN' | 'LIBRARIAN' | 'CLERK' | 'BORROWER'
+}
+
 function App() {
+  const [token, setToken] = useState('')
+  const [user, setUser] = useState<User | null>(null)
+  const [username, setUsername] = useState('admin')
+  const [password, setPassword] = useState('admin')
+
   const [books, setBooks] = useState<Book[]>([])
+  const [borrowers, setBorrowers] = useState<Borrower[]>([])
   const [borrower, setBorrower] = useState<Borrower | null>(null)
   const [searchBy, setSearchBy] = useState<'title' | 'author' | 'subject'>('title')
   const [query, setQuery] = useState('')
   const [borrowerId, setBorrowerId] = useState('')
   const [bookId, setBookId] = useState('')
-  const [staffId, setStaffId] = useState('')
+  const [newBorrowerUsername, setNewBorrowerUsername] = useState('')
+  const [newBorrowerPassword, setNewBorrowerPassword] = useState('')
+  const [newBorrowerName, setNewBorrowerName] = useState('')
+  const [newBorrowerAddress, setNewBorrowerAddress] = useState('')
+  const [newBorrowerPhone, setNewBorrowerPhone] = useState('')
+  const [newBookTitle, setNewBookTitle] = useState('')
+  const [newBookAuthor, setNewBookAuthor] = useState('')
+  const [newBookSubject, setNewBookSubject] = useState('')
+  const [newBookIsbn, setNewBookIsbn] = useState('')
+  const [newBookCopies, setNewBookCopies] = useState('1')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
+  const canManageBooks = useMemo(() => user?.role === 'ADMIN' || user?.role === 'LIBRARIAN', [user])
+  const canManageLoans = useMemo(() => user?.role === 'ADMIN' || user?.role === 'LIBRARIAN' || user?.role === 'CLERK', [user])
+
   useEffect(() => {
+    if (!token) return
     void loadAllBooks()
-  }, [])
+    void loadBorrowers()
+  }, [token])
+
+  async function login(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? 'Login failed')
+      }
+      const data = (await response.json()) as { token: string; userId: number; username: string; fullName: string; role: User['role'] }
+      setToken(data.token)
+      setUser({
+        userId: data.userId,
+        username: data.username,
+        fullName: data.fullName,
+        role: data.role,
+      })
+      setMessage(`Logged in as ${data.fullName} (${data.role})`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function authHeaders(): Record<string, string> {
+    if (!token) {
+      return {}
+    }
+    return { Authorization: `Bearer ${token}` }
+  }
 
   async function loadAllBooks() {
     setLoading(true)
     setError(null)
     setMessage(null)
     try {
-      const response = await fetch('/api/books')
+      const response = await fetch('/api/books', {
+        headers: authHeaders(),
+      })
       if (!response.ok) throw new Error('Failed to load books')
       const data: Book[] = await response.json()
       setBooks(data)
@@ -61,7 +131,7 @@ function App() {
     try {
       const response = await fetch('/api/books/search', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ searchBy, query }),
       })
       if (!response.ok) throw new Error('Search request failed')
@@ -80,7 +150,9 @@ function App() {
     setError(null)
     setMessage(null)
     try {
-      const response = await fetch(`/api/borrowers/${borrowerId}`)
+      const response = await fetch(`/api/borrowers/${borrowerId}`, {
+        headers: authHeaders(),
+      })
       if (!response.ok) throw new Error('Borrower not found')
       const data: Borrower = await response.json()
       setBorrower(data)
@@ -93,6 +165,18 @@ function App() {
     }
   }
 
+  async function loadBorrowers() {
+    if (!token) return
+    try {
+      const response = await fetch('/api/borrowers', { headers: authHeaders() })
+      if (!response.ok) return
+      const data: Borrower[] = await response.json()
+      setBorrowers(data)
+    } catch {
+      // keep UI resilient if role doesn't allow this endpoint
+    }
+  }
+
   async function processLoan(action: 'checkout' | 'checkin') {
     setLoading(true)
     setError(null)
@@ -100,11 +184,10 @@ function App() {
     try {
       const response = await fetch(`/api/loans/${action}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           borrowerId: Number(borrowerId),
           bookId: Number(bookId),
-          staffId: Number(staffId),
         }),
       })
 
@@ -113,7 +196,8 @@ function App() {
         throw new Error(payload?.error ?? `Failed to ${action} book`)
       }
 
-      setMessage(`Book ${action === 'checkout' ? 'checked out' : 'checked in'} successfully.`)
+      const result = (await response.json()) as { message: string; fineAmount: number }
+      setMessage(`${result.message}${result.fineAmount > 0 ? ` | Fine: Rs ${result.fineAmount}` : ''}`)
       await loadAllBooks()
       await loadBorrower()
     } catch (err) {
@@ -123,11 +207,138 @@ function App() {
     }
   }
 
+  async function renewLoan() {
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch('/api/loans/renew', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          borrowerId: Number(borrowerId),
+          bookId: Number(bookId),
+        }),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? 'Failed to renew loan')
+      }
+      const result = (await response.json()) as { message: string }
+      setMessage(result.message)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function createBorrower(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch('/api/borrowers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          username: newBorrowerUsername,
+          password: newBorrowerPassword,
+          fullName: newBorrowerName,
+          address: newBorrowerAddress,
+          phoneNo: newBorrowerPhone,
+        }),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? 'Failed to create borrower')
+      }
+      const created: Borrower = await response.json()
+      setMessage(`Borrower created with ID ${created.id}`)
+      setNewBorrowerUsername('')
+      setNewBorrowerPassword('')
+      setNewBorrowerName('')
+      setNewBorrowerAddress('')
+      setNewBorrowerPhone('')
+      await loadBorrowers()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function createBook(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch('/api/books', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          isbn: newBookIsbn,
+          title: newBookTitle,
+          author: newBookAuthor,
+          subject: newBookSubject,
+          copies: Number(newBookCopies),
+        }),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? 'Failed to create book')
+      }
+      const created: Book = await response.json()
+      setMessage(`Book created with ID ${created.id}`)
+      setNewBookTitle('')
+      setNewBookAuthor('')
+      setNewBookSubject('')
+      setNewBookIsbn('')
+      setNewBookCopies('1')
+      await loadAllBooks()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!token || !user) {
+    return (
+      <main className="page">
+        <header className="page-header">
+          <h1>Library Management System</h1>
+          <p>Reengineered web frontend with role-based login</p>
+        </header>
+        <section className="card">
+          <h2>Login</h2>
+          <form onSubmit={login} className="search-form">
+            <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" />
+            <input
+              value={password}
+              type="password"
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+            />
+            <button type="submit">Login</button>
+          </form>
+          <p className="hint">
+            Demo users: <code>admin/admin</code>, <code>librarian1/librarian</code>, <code>clerk1/clerk</code>, <code>borrower1/borrower</code>
+          </p>
+          {loading && <p>Loading...</p>}
+          {error && <p className="error">{error}</p>}
+        </section>
+      </main>
+    )
+  }
+
   return (
     <main className="page">
       <header className="page-header">
         <h1>Library Management System</h1>
-        <p>Legacy Java core with a modern web frontend</p>
+        <p>Welcome {user.fullName} ({user.role})</p>
       </header>
 
       <section className="card">
@@ -154,9 +365,11 @@ function App() {
             <thead>
               <tr>
                 <th>ID</th>
+                <th>ISBN</th>
                 <th>Title</th>
                 <th>Author</th>
                 <th>Subject</th>
+                <th>Copies</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -164,21 +377,37 @@ function App() {
               {books.map((book) => (
                 <tr key={book.id}>
                   <td>{book.id}</td>
+                  <td>{book.isbn || '-'}</td>
                   <td>{book.title}</td>
                   <td>{book.author}</td>
                   <td>{book.subject}</td>
+                  <td>{book.availableCopies}/{book.totalCopies}</td>
                   <td>{book.issued ? 'Issued' : 'Available'}</td>
                 </tr>
               ))}
               {books.length === 0 && (
                 <tr>
-                  <td colSpan={5}>No books found.</td>
+                  <td colSpan={7}>No books found.</td>
                 </tr>
               )}
             </tbody>
           </table>
         )}
       </section>
+
+      {canManageBooks && (
+        <section className="card">
+          <h2>Add Book</h2>
+          <form onSubmit={createBook} className="actions-grid">
+            <input value={newBookIsbn} onChange={(e) => setNewBookIsbn(e.target.value)} placeholder="ISBN (optional)" />
+            <input value={newBookTitle} onChange={(e) => setNewBookTitle(e.target.value)} placeholder="Title" />
+            <input value={newBookAuthor} onChange={(e) => setNewBookAuthor(e.target.value)} placeholder="Author" />
+            <input value={newBookSubject} onChange={(e) => setNewBookSubject(e.target.value)} placeholder="Subject" />
+            <input value={newBookCopies} onChange={(e) => setNewBookCopies(e.target.value)} placeholder="Copies" />
+            <button type="submit">Add Book</button>
+          </form>
+        </section>
+      )}
 
       <section className="card">
         <h2>Borrower & Circulation</h2>
@@ -193,14 +422,10 @@ function App() {
             onChange={(event) => setBookId(event.target.value)}
             placeholder="Book ID"
           />
-          <input
-            value={staffId}
-            onChange={(event) => setStaffId(event.target.value)}
-            placeholder="Staff ID (Clerk/Librarian)"
-          />
           <button type="button" onClick={() => void loadBorrower()}>Load Borrower</button>
-          <button type="button" onClick={() => void processLoan('checkout')}>Checkout</button>
-          <button type="button" onClick={() => void processLoan('checkin')}>Check-In</button>
+          {canManageLoans && <button type="button" onClick={() => void processLoan('checkout')}>Checkout</button>}
+          {canManageLoans && <button type="button" onClick={() => void processLoan('checkin')}>Check-In</button>}
+          <button type="button" onClick={() => void renewLoan()}>Renew</button>
         </div>
 
         {borrower && (
@@ -216,6 +441,36 @@ function App() {
 
         {message && <p className="message">{message}</p>}
       </section>
+
+      {canManageLoans && (
+        <section className="card">
+          <h2>Register Borrower</h2>
+          <form onSubmit={createBorrower} className="actions-grid">
+            <input value={newBorrowerUsername} onChange={(e) => setNewBorrowerUsername(e.target.value)} placeholder="Username" />
+            <input
+              value={newBorrowerPassword}
+              type="password"
+              onChange={(e) => setNewBorrowerPassword(e.target.value)}
+              placeholder="Password"
+            />
+            <input value={newBorrowerName} onChange={(e) => setNewBorrowerName(e.target.value)} placeholder="Full Name" />
+            <input value={newBorrowerAddress} onChange={(e) => setNewBorrowerAddress(e.target.value)} placeholder="Address" />
+            <input value={newBorrowerPhone} onChange={(e) => setNewBorrowerPhone(e.target.value)} placeholder="Phone" />
+            <button type="submit">Create Borrower</button>
+          </form>
+
+          {borrowers.length > 0 && (
+            <div className="borrower-list">
+              <h3>All Borrowers</h3>
+              {borrowers.map((item) => (
+                <p key={item.id}>
+                  #{item.id} - {item.name} ({item.phoneNumber}) | Borrowed: {item.borrowedBooksCount}
+                </p>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </main>
   )
 }

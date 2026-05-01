@@ -9,9 +9,6 @@ public class LoanActionRequest {
     @Min(value = 1, message = "bookId must be greater than 0")
     private int bookId;
 
-    @Min(value = 1, message = "staffId must be greater than 0")
-    private int staffId;
-
     public int getBorrowerId() {
         return borrowerId;
     }
@@ -26,13 +23,5 @@ public class LoanActionRequest {
 
     public void setBookId(int bookId) {
         this.bookId = bookId;
-    }
-
-    public int getStaffId() {
-        return staffId;
-    }
-
-    public void setStaffId(int staffId) {
-        this.staffId = staffId;
     }
 }

@@ -1,3 +1,48 @@
+# Refactoring Log (Phase 1)
+
+This log explicitly maps implementation changes to the six refactoring categories from the SRE Mid 2 document.
+
+## 1) Composing Methods
+- Broke legacy-style monolithic flow into focused services:
+  - `AuthService`
+  - `BookService`
+  - `BorrowerService`
+  - `LoanService`
+- Each service has single-purpose methods for login, search, checkout, check-in, and renew.
+
+## 2) Moving Features Between Objects
+- Moved persistence logic out of service/controller logic into dedicated repositories:
+  - `UserRepository`
+  - `BookRepository`
+  - `LoanRepository`
+- Moved password hashing to `PasswordHasher` utility.
+
+## 3) Organizing Data
+- Introduced stronger role representation with `Role` enum.
+- Introduced dedicated DTOs for each use-case:
+  - `LoginRequest`, `AuthResponse`
+  - `CreateBookRequest`, `CreateBorrowerRequest`
+  - `LoanResultDto`
+
+## 4) Simplifying Conditional Expressions
+- Replaced ad-hoc permission checks with central role checks in `AuthService.requireAnyRole(...)`.
+- Reduced controller branching by pushing validation to services and bean validation annotations.
+
+## 5) Simplifying Method Calls
+- Replaced implicit legacy-style operations with explicit endpoint contracts:
+  - `/api/auth/login`
+  - `/api/books`, `/api/books/search`
+  - `/api/borrowers`, `/api/borrowers/{id}`
+  - `/api/loans/checkout`, `/api/loans/checkin`, `/api/loans/renew`
+
+## 6) Dealing with Generalization
+- Centralized authorization concerns in `AuthService` and session model (`SessionUser`) so controllers use shared behavior.
+
+## Reengineering Strategy Used in This Phase
+- **Partial + Incremental + Iterative (hybrid)**:
+  - Partial: introduced a new layered backend path without requiring full immediate rewrite.
+  - Incremental: delivered authentication, catalog, borrower, and circulation in one runnable iteration.
+  - Iterative: established a stable base to continue evolving role features (holds/fines history/admin workflows).
 # Refactoring Log
 
 Use this log to connect each change with refactoring concepts from the provided PDF.

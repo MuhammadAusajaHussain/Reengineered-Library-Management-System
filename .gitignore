@@ -1,5 +1,6 @@
 # Java / Maven
 api/target/
+api/derby.log
 
 # Node / Vite
 client/node_modules/
@@ -8,3 +9,6 @@ client/dist/
 # IDE / OS
 .DS_Store
 Thumbs.db
+
+# Runtime database files
+Database/LMS_REENGINEERED/

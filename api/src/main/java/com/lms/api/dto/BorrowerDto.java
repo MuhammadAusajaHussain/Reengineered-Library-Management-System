@@ -4,11 +4,11 @@ public class BorrowerDto {
     private int id;
     private String name;
     private String address;
-    private int phoneNumber;
+    private String phoneNumber;
     private int borrowedBooksCount;
     private int onHoldBooksCount;
 
-    public BorrowerDto(int id, String name, String address, int phoneNumber, int borrowedBooksCount, int onHoldBooksCount) {
+    public BorrowerDto(int id, String name, String address, String phoneNumber, int borrowedBooksCount, int onHoldBooksCount) {
         this.id = id;
         this.name = name;
         this.address = address;
@@ -29,7 +29,7 @@ public class BorrowerDto {
         return address;
     }
 
-    public int getPhoneNumber() {
+    public String getPhoneNumber() {
         return phoneNumber;
     }
 
