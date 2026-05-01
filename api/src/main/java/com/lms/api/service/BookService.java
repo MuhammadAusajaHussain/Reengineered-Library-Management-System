@@ -64,6 +64,10 @@ public class BookService {
         bookRepository.changeAvailability(bookId, 1);
     }
 
+    public int countBooks() {
+        return bookRepository.countBooks();
+    }
+
     private BookDto toDto(BookRepository.BookRow row) {
         return new BookDto(
                 row.getId(),

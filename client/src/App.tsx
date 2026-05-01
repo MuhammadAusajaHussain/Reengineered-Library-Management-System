@@ -28,6 +28,32 @@ type User = {
   role: 'ADMIN' | 'LIBRARIAN' | 'CLERK' | 'BORROWER'
 }
 
+type ActiveLoan = {
+  loanId: number
+  borrowerId: number
+  bookId: number
+  bookTitle: string
+  dueDate: string
+  pendingFine: number
+  finePaid: boolean
+}
+
+type HoldItem = {
+  id: number
+  bookId: number
+  bookTitle: string
+  requestDate: string
+  status: string
+}
+
+type DashboardStats = {
+  totalBooks: number
+  activeLoans: number
+  overdueUnpaidLoans: number
+  activeHolds: number
+  totalBorrowers: number
+}
+
 function App() {
   const [token, setToken] = useState('')
   const [user, setUser] = useState<User | null>(null)
@@ -51,6 +77,10 @@ function App() {
   const [newBookSubject, setNewBookSubject] = useState('')
   const [newBookIsbn, setNewBookIsbn] = useState('')
   const [newBookCopies, setNewBookCopies] = useState('1')
+  const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([])
+  const [holds, setHolds] = useState<HoldItem[]>([])
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null)
+  const [fineLoanId, setFineLoanId] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -62,6 +92,8 @@ function App() {
     if (!token) return
     void loadAllBooks()
     void loadBorrowers()
+    void loadActiveLoans()
+    void loadDashboardStats()
   }, [token])
 
   async function login(event: FormEvent<HTMLFormElement>) {
@@ -177,6 +209,34 @@ function App() {
     }
   }
 
+  async function loadActiveLoans() {
+    if (!token) return
+    try {
+      const response = await fetch('/api/loans/active', {
+        headers: authHeaders(),
+      })
+      if (!response.ok) return
+      const data: ActiveLoan[] = await response.json()
+      setActiveLoans(data)
+    } catch {
+      // no-op
+    }
+  }
+
+  async function loadDashboardStats() {
+    if (!token || !canManageLoans) return
+    try {
+      const response = await fetch('/api/dashboard/stats', {
+        headers: authHeaders(),
+      })
+      if (!response.ok) return
+      const data: DashboardStats = await response.json()
+      setDashboardStats(data)
+    } catch {
+      // no-op
+    }
+  }
+
   async function processLoan(action: 'checkout' | 'checkin') {
     setLoading(true)
     setError(null)
@@ -200,6 +260,8 @@ function App() {
       setMessage(`${result.message}${result.fineAmount > 0 ? ` | Fine: Rs ${result.fineAmount}` : ''}`)
       await loadAllBooks()
       await loadBorrower()
+      await loadActiveLoans()
+      await loadDashboardStats()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -226,6 +288,72 @@ function App() {
       }
       const result = (await response.json()) as { message: string }
       setMessage(result.message)
+      await loadActiveLoans()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function placeHold() {
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch(`/api/holds?borrowerId=${Number(borrowerId)}&bookId=${Number(bookId)}`, {
+        method: 'POST',
+        headers: authHeaders(),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? 'Failed to place hold')
+      }
+      const data = (await response.json()) as HoldItem
+      setMessage(`Hold created for ${data.bookTitle}`)
+      await loadHolds()
+      await loadBorrower()
+      await loadDashboardStats()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function loadHolds() {
+    if (!borrowerId.trim()) return
+    try {
+      const response = await fetch(`/api/holds?borrowerId=${Number(borrowerId)}`, {
+        headers: authHeaders(),
+      })
+      if (!response.ok) return
+      const data: HoldItem[] = await response.json()
+      setHolds(data)
+    } catch {
+      // no-op
+    }
+  }
+
+  async function payFine() {
+    if (!fineLoanId.trim()) return
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch('/api/loans/pay-fine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ loanId: Number(fineLoanId) }),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? 'Failed to pay fine')
+      }
+      const result = (await response.json()) as { message: string; fineAmount: number }
+      setMessage(`${result.message}${result.fineAmount ? ` | Paid: Rs ${result.fineAmount}` : ''}`)
+      await loadActiveLoans()
+      await loadDashboardStats()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -341,6 +469,19 @@ function App() {
         <p>Welcome {user.fullName} ({user.role})</p>
       </header>
 
+      {dashboardStats && (
+        <section className="card">
+          <h2>Dashboard</h2>
+          <div className="stats-grid">
+            <p>Total Books: <strong>{dashboardStats.totalBooks}</strong></p>
+            <p>Active Loans: <strong>{dashboardStats.activeLoans}</strong></p>
+            <p>Overdue Unpaid Loans: <strong>{dashboardStats.overdueUnpaidLoans}</strong></p>
+            <p>Active Holds: <strong>{dashboardStats.activeHolds}</strong></p>
+            <p>Total Borrowers: <strong>{dashboardStats.totalBorrowers}</strong></p>
+          </div>
+        </section>
+      )}
+
       <section className="card">
         <form onSubmit={onSearchSubmit} className="search-form">
           <select value={searchBy} onChange={(event) => setSearchBy(event.target.value as 'title' | 'author' | 'subject')}>
@@ -423,9 +564,11 @@ function App() {
             placeholder="Book ID"
           />
           <button type="button" onClick={() => void loadBorrower()}>Load Borrower</button>
+          <button type="button" onClick={() => void loadHolds()}>Load Holds</button>
           {canManageLoans && <button type="button" onClick={() => void processLoan('checkout')}>Checkout</button>}
           {canManageLoans && <button type="button" onClick={() => void processLoan('checkin')}>Check-In</button>}
           <button type="button" onClick={() => void renewLoan()}>Renew</button>
+          <button type="button" onClick={() => void placeHold()}>Place Hold</button>
         </div>
 
         {borrower && (
@@ -440,6 +583,36 @@ function App() {
         )}
 
         {message && <p className="message">{message}</p>}
+      </section>
+
+      <section className="card">
+        <h2>Active Loans & Fine Payment</h2>
+        <div className="actions-grid">
+          <input value={fineLoanId} onChange={(e) => setFineLoanId(e.target.value)} placeholder="Loan ID for fine payment" />
+          {canManageLoans && <button type="button" onClick={() => void payFine()}>Mark Fine Paid</button>}
+        </div>
+        {activeLoans.length > 0 ? (
+          <div className="borrower-list">
+            {activeLoans.map((loan) => (
+              <p key={loan.loanId}>
+                Loan #{loan.loanId} | Borrower #{loan.borrowerId} | {loan.bookTitle} | Due: {loan.dueDate.slice(0, 10)} | Pending fine: Rs {loan.pendingFine} | Fine paid: {loan.finePaid ? 'Yes' : 'No'}
+              </p>
+            ))}
+          </div>
+        ) : <p>No active loans.</p>}
+      </section>
+
+      <section className="card">
+        <h2>Hold Requests</h2>
+        {holds.length > 0 ? (
+          <div className="borrower-list">
+            {holds.map((hold) => (
+              <p key={hold.id}>
+                Hold #{hold.id} | Book #{hold.bookId} ({hold.bookTitle}) | Requested: {hold.requestDate.slice(0, 10)} | {hold.status}
+              </p>
+            ))}
+          </div>
+        ) : <p>No hold requests loaded.</p>}
       </section>
 
       {canManageLoans && (

@@ -39,12 +39,15 @@ public class LoanRepository {
 
     public LoanRow findActiveLoan(int borrowerId, int bookId) {
         List<LoanRow> rows = jdbcTemplate.query(
-                "SELECT id, issue_date, due_date FROM loan WHERE borrower_user_id = ? AND book_id = ? AND return_date IS NULL",
+                "SELECT id, book_id, borrower_user_id, issue_date, due_date, fine_paid FROM loan WHERE borrower_user_id = ? AND book_id = ? AND return_date IS NULL",
                 new Object[]{borrowerId, bookId},
                 (rs, idx) -> new LoanRow(
                         rs.getInt("id"),
+                        rs.getInt("book_id"),
+                        rs.getInt("borrower_user_id"),
                         rs.getTimestamp("issue_date").toLocalDateTime(),
-                        rs.getTimestamp("due_date").toLocalDateTime()
+                        rs.getTimestamp("due_date").toLocalDateTime(),
+                        rs.getBoolean("fine_paid")
                 )
         );
         return rows.isEmpty() ? null : rows.get(0);
@@ -77,19 +80,92 @@ public class LoanRepository {
         );
     }
 
+    public void markFinePaid(int loanId) {
+        jdbcTemplate.update("UPDATE loan SET fine_paid = ? WHERE id = ?", true, loanId);
+    }
+
+    public LoanRow findById(int loanId) {
+        List<LoanRow> rows = jdbcTemplate.query(
+                "SELECT id, book_id, borrower_user_id, issue_date, due_date, fine_paid FROM loan WHERE id = ?",
+                new Object[]{loanId},
+                (rs, idx) -> new LoanRow(
+                        rs.getInt("id"),
+                        rs.getInt("book_id"),
+                        rs.getInt("borrower_user_id"),
+                        rs.getTimestamp("issue_date").toLocalDateTime(),
+                        rs.getTimestamp("due_date").toLocalDateTime(),
+                        rs.getBoolean("fine_paid")
+                )
+        );
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    public List<LoanRow> listActiveLoansForBorrower(int borrowerId) {
+        return jdbcTemplate.query(
+                "SELECT id, book_id, borrower_user_id, issue_date, due_date, fine_paid FROM loan WHERE borrower_user_id = ? AND return_date IS NULL ORDER BY issue_date DESC",
+                new Object[]{borrowerId},
+                (rs, idx) -> new LoanRow(
+                        rs.getInt("id"),
+                        rs.getInt("book_id"),
+                        rs.getInt("borrower_user_id"),
+                        rs.getTimestamp("issue_date").toLocalDateTime(),
+                        rs.getTimestamp("due_date").toLocalDateTime(),
+                        rs.getBoolean("fine_paid")
+                )
+        );
+    }
+
+    public List<LoanRow> listAllActiveLoans() {
+        return jdbcTemplate.query(
+                "SELECT id, book_id, borrower_user_id, issue_date, due_date, fine_paid FROM loan WHERE return_date IS NULL ORDER BY issue_date DESC",
+                (rs, idx) -> new LoanRow(
+                        rs.getInt("id"),
+                        rs.getInt("book_id"),
+                        rs.getInt("borrower_user_id"),
+                        rs.getTimestamp("issue_date").toLocalDateTime(),
+                        rs.getTimestamp("due_date").toLocalDateTime(),
+                        rs.getBoolean("fine_paid")
+                )
+        );
+    }
+
+    public int countAllActiveLoans() {
+        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM loan WHERE return_date IS NULL", Integer.class);
+        return count == null ? 0 : count.intValue();
+    }
+
+    public int countOverdueUnpaidLoans(LocalDateTime now) {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM loan WHERE return_date IS NULL AND due_date < ? AND fine_paid = ?",
+                Integer.class,
+                Timestamp.valueOf(now),
+                false
+        );
+        return count == null ? 0 : count.intValue();
+    }
+
     public static class LoanRow {
         private final int id;
+        private final int bookId;
+        private final int borrowerId;
         private final LocalDateTime issueDate;
         private final LocalDateTime dueDate;
+        private final boolean finePaid;
 
-        public LoanRow(int id, LocalDateTime issueDate, LocalDateTime dueDate) {
+        public LoanRow(int id, int bookId, int borrowerId, LocalDateTime issueDate, LocalDateTime dueDate, boolean finePaid) {
             this.id = id;
+            this.bookId = bookId;
+            this.borrowerId = borrowerId;
             this.issueDate = issueDate;
             this.dueDate = dueDate;
+            this.finePaid = finePaid;
         }
 
         public int getId() { return id; }
+        public int getBookId() { return bookId; }
+        public int getBorrowerId() { return borrowerId; }
         public LocalDateTime getIssueDate() { return issueDate; }
         public LocalDateTime getDueDate() { return dueDate; }
+        public boolean isFinePaid() { return finePaid; }
     }
 }

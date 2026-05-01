@@ -92,6 +92,11 @@ public class BookRepository {
         );
     }
 
+    public int countBooks() {
+        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM book", Integer.class);
+        return count == null ? 0 : count.intValue();
+    }
+
     public static class BookRow {
         private final int id;
         private final String isbn;

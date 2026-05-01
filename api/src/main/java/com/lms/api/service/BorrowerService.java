@@ -4,6 +4,7 @@ import com.lms.api.dto.BorrowerDto;
 import com.lms.api.dto.CreateBorrowerRequest;
 import com.lms.api.exception.BadRequestException;
 import com.lms.api.exception.NotFoundException;
+import com.lms.api.infrastructure.repository.HoldRepository;
 import com.lms.api.infrastructure.repository.LoanRepository;
 import com.lms.api.infrastructure.repository.UserRepository;
 import com.lms.api.util.PasswordHasher;
@@ -16,10 +17,12 @@ import java.util.stream.Collectors;
 public class BorrowerService {
     private final UserRepository userRepository;
     private final LoanRepository loanRepository;
+    private final HoldRepository holdRepository;
 
-    public BorrowerService(UserRepository userRepository, LoanRepository loanRepository) {
+    public BorrowerService(UserRepository userRepository, LoanRepository loanRepository, HoldRepository holdRepository) {
         this.userRepository = userRepository;
         this.loanRepository = loanRepository;
+        this.holdRepository = holdRepository;
     }
 
     public List<BorrowerDto> getBorrowers() {
@@ -53,13 +56,14 @@ public class BorrowerService {
 
     private BorrowerDto toDto(UserRepository.BorrowerProfileRow row) {
         int activeLoanCount = loanRepository.countActiveLoansForBorrower(row.getId());
+        int activeHoldCount = holdRepository.countActiveHoldsForBorrower(row.getId());
         return new BorrowerDto(
                 row.getId(),
                 row.getFullName(),
                 row.getAddress(),
                 row.getPhoneNo(),
                 activeLoanCount,
-                0
+                activeHoldCount
         );
     }
 }
