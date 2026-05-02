@@ -15,10 +15,13 @@ This project successfully transitioned a legacy NetBeans console-based Library M
 ### 2. User Experience (UX) & Design
 - **Premium Interface:** Implemented a "Glassmorphism" design system featuring high-contrast dark mode, backdrop-blur effects, and subtle micro-animations.
 - **Smart Forms:** Developed a responsive grid system for forms that automatically adapts between single and double columns based on complexity.
+- **Personalized Dashboard:** Tailored dashboard views for different roles. Staff see global inventory metrics, while Borrowers see their personal active loans, hold requests, and reading history.
 - **Role-Based Routing:** Secure sidebar navigation that conditionally renders capabilities based on user role (Admin, Librarian, Clerk, Borrower).
 
 ### 3. Functional Enhancements
-- **Self-Healing Inventory:** Added a startup reconciliation task that automatically fixes book availability mismatches by checking active loans against total stock.
+- **Self-Healing Inventory:** Added a startup reconciliation task that automatically fixes book availability mismatches and synchronizes user roles (e.g., auto-correcting staff counts).
+- **Session Persistence:** Integrated `localStorage` authentication tracking, allowing users to remain logged in across page refreshes and browser restarts.
+- **Live Data Synchronization:** Implemented navigation-aware and mutation-triggered data refreshing, ensuring the dashboard is always accurate without manual reloads.
 - **Unified Management:** Synchronized the User and Borrower databases, allowing Admins to manage members seamlessly from multiple entry points.
 - **Intelligent Cataloging:** Implemented "Merge-on-Create" logic to prevent duplicate book cards and automatically increment copy counts for existing titles.
 - **Advanced Holds:** Fully realized the Hold lifecycle (`ACTIVE` -> `READY` -> `FULFILLED`), including automated checkout readiness notifications.

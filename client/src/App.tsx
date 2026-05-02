@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
+import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import type { ActiveLoan, Book, Borrower, DashboardStats, HoldItem, LoanHistory, ManagedUser, Role, User } from './types'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
@@ -15,8 +15,11 @@ import LoansPage from './pages/LoansPage'
 import HoldsPage from './pages/HoldsPage'
 
 function App() {
-  const [token, setToken] = useState('')
-  const [user, setUser] = useState<User | null>(null)
+  const [token, setToken] = useState(() => localStorage.getItem('lms_token') || '')
+  const [user, setUser] = useState<User | null>(() => {
+    const stored = localStorage.getItem('lms_user')
+    return stored ? JSON.parse(stored) : null
+  })
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [books, setBooks] = useState<Book[]>([])
@@ -24,7 +27,14 @@ function App() {
   const [borrower, setBorrower] = useState<Borrower | null>(null)
   const [searchBy, setSearchBy] = useState<'title' | 'author' | 'subject'>('title')
   const [query, setQuery] = useState('')
-  const [borrowerId, setBorrowerId] = useState('')
+  const [borrowerId, setBorrowerId] = useState(() => {
+    const stored = localStorage.getItem('lms_user')
+    if (stored) {
+      const u = JSON.parse(stored)
+      if (u.role === 'BORROWER') return u.userId.toString()
+    }
+    return ''
+  })
   const [bookId, setBookId] = useState('')
   const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([])
   const [holds, setHolds] = useState<HoldItem[]>([])
@@ -42,6 +52,8 @@ function App() {
 
   const canSeeDashboard = useMemo(() => !!user, [user])
 
+  const location = useLocation()
+
   useEffect(() => {
     if (!token) return
     void loadAllBooks()
@@ -52,6 +64,12 @@ function App() {
     void loadUsers()
     void loadHolds()
   }, [token, user?.role, borrowerId])
+
+  useEffect(() => {
+    if (token && location.pathname === '/dashboard') {
+      void loadDashboardStats()
+    }
+  }, [location.pathname, token])
 
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -76,13 +94,16 @@ function App() {
         throw new Error(errorMessage)
       }
       const data = (await response.json()) as { token: string; userId: number; username: string; fullName: string; role: User['role'] }
-      setToken(data.token)
-      setUser({
+      const sessionUser = {
         userId: data.userId,
         username: data.username,
         fullName: data.fullName,
         role: data.role,
-      })
+      }
+      setToken(data.token)
+      setUser(sessionUser)
+      localStorage.setItem('lms_token', data.token)
+      localStorage.setItem('lms_user', JSON.stringify(sessionUser))
       if (data.role === 'BORROWER') {
         setBorrowerId(data.userId.toString())
       }
@@ -286,6 +307,7 @@ function App() {
       setMessage('User updated successfully')
       await loadUsers()
       await loadBorrowers()
+      await loadDashboardStats()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -369,6 +391,7 @@ function App() {
       const result = (await response.json()) as { message: string }
       setMessage(result.message)
       await loadActiveLoans()
+      await loadDashboardStats()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -600,6 +623,7 @@ function App() {
       const created: Book = await response.json()
       setMessage(`Book created with ID ${created.id}`)
       await loadAllBooks()
+      await loadDashboardStats()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -624,6 +648,7 @@ function App() {
       setMessage('Borrower updated successfully')
       await loadBorrowers()
       await loadUsers()
+      await loadDashboardStats()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -634,6 +659,24 @@ function App() {
   async function deleteBorrower(id: number) {
     if (!window.confirm('Are you sure you want to delete this borrower? This will also delete their user account and all related data.')) return
     await deleteUser(id)
+  }
+
+  function logout() {
+    setToken('')
+    setUser(null)
+    setBorrowerId('')
+    setBooks([])
+    setBorrowers([])
+    setDashboardStats(null)
+    setLoanHistory([])
+    setUsers([])
+    setHolds([])
+    setActiveLoans([])
+    setPassword('')
+    setError(null)
+    setMessage(null)
+    localStorage.removeItem('lms_token')
+    localStorage.removeItem('lms_user')
   }
 
   if (!token || !user) {
@@ -660,7 +703,7 @@ function App() {
           <NavLink to="/holds" className={routeClassName}>Holds</NavLink>
           {canManageLoans && <NavLink to="/borrowers" className={routeClassName}>Borrowers</NavLink>}
           {isAdmin && <NavLink to="/users" className={routeClassName}>User Management</NavLink>}
-          <button type="button" onClick={() => { setToken(''); setUser(null); setPassword(''); setError(null); setMessage(null) }}>Logout</button>
+          <button type="button" onClick={logout}>Logout</button>
         </nav>
       </aside>
 
