@@ -1,2 +1,22 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Standard patterns
+*.java text
+*.tsx text
+*.ts text
+*.js text
+*.css text
+*.html text
+*.json text
+*.md text
+*.xml text
+*.properties text
+
+# Binary patterns
+*.jpg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.mdj binary

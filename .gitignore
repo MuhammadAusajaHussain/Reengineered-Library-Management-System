@@ -1,14 +1,43 @@
 # Java / Maven
 api/target/
 api/derby.log
+*.class
+*.jar
+*.war
+*.ear
+*.log
 
 # Node / Vite
 client/node_modules/
 client/dist/
+client/.env.local
+client/.env.development.local
+client/.env.test.local
+client/.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # IDE / OS
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+.settings/
+.classpath
+.project
+.factorypath
 
 # Runtime database files
+# Ignore the actual database content but keep the directory reference if needed
 Database/LMS_REENGINEERED/
+Database/*.lck
+Database/*.log
+Database/service.properties
+
+# Logs directory (if any)
+logs/
+*.log
