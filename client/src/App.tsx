@@ -136,14 +136,21 @@ function App() {
     setError(null)
     setMessage(null)
     try {
+      const normalizedUsername = username.trim()
+      const normalizedPassword = password.trim()
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: normalizedUsername, password: normalizedPassword }),
       })
       if (!response.ok) {
         const payload = await response.json().catch(() => null)
-        throw new Error(payload?.error ?? 'Login failed')
+        const fallbackText = await response.text().catch(() => '')
+        const errorMessage =
+          payload?.error ??
+          payload?.message ??
+          (fallbackText ? fallbackText : `Login failed (HTTP ${response.status})`)
+        throw new Error(errorMessage)
       }
       const data = (await response.json()) as { token: string; userId: number; username: string; fullName: string; role: User['role'] }
       setToken(data.token)
