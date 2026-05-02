@@ -143,10 +143,31 @@ public class LoanRepository {
         return count == null ? 0 : count.intValue();
     }
 
+    public int countTotalLoans() {
+        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM loan", Integer.class);
+        return count == null ? 0 : count.intValue();
+    }
+
+    public int countTotalLoansForBorrower(int borrowerId) {
+        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM loan WHERE borrower_user_id = ?", Integer.class, borrowerId);
+        return count == null ? 0 : count.intValue();
+    }
+
     public int countOverdueUnpaidLoans(LocalDateTime now) {
         Integer count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM loan WHERE return_date IS NULL AND due_date < ? AND fine_paid = ?",
                 Integer.class,
+                Timestamp.valueOf(now),
+                false
+        );
+        return count == null ? 0 : count.intValue();
+    }
+
+    public int countOverdueUnpaidForBorrower(int borrowerId, LocalDateTime now) {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM loan WHERE borrower_user_id = ? AND return_date IS NULL AND due_date < ? AND fine_paid = ?",
+                Integer.class,
+                borrowerId,
                 Timestamp.valueOf(now),
                 false
         );

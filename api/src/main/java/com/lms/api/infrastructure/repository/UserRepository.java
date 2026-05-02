@@ -180,6 +180,13 @@ public class UserRepository {
         return count == null ? 0 : count.intValue();
     }
 
+    public void ensureBorrowerProfile(int userId) {
+        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM borrower_profile WHERE user_id = ?", Integer.class, userId);
+        if (count == null || count == 0) {
+            jdbcTemplate.update("INSERT INTO borrower_profile (user_id, address, phone_no) VALUES (?, ?, ?)", userId, "", "");
+        }
+    }
+
     public static class UserRow {
         private final int id;
         private final String username;

@@ -24,7 +24,8 @@ public class DashboardController {
     @GetMapping("/stats")
     public DashboardStatsDto stats(@RequestHeader(value = "Authorization", required = false) String authorization) {
         SessionUser user = authService.getSessionUser(authorization);
-        authService.requireAnyRole(user, Role.ADMIN, Role.LIBRARIAN, Role.CLERK);
-        return dashboardService.getStats();
+        authService.requireAnyRole(user, Role.ADMIN, Role.LIBRARIAN, Role.CLERK, Role.BORROWER);
+        Integer borrowerId = (user.getRole() == Role.BORROWER) ? user.getUserId() : null;
+        return dashboardService.getStats(borrowerId);
     }
 }

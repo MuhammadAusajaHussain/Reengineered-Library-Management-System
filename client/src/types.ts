@@ -61,6 +61,7 @@ export type DashboardStats = {
   activeHolds: number
   totalBorrowers: number
   totalStaff: number
+  totalLoans: number
 }
 
 export type LoanHistory = {

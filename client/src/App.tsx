@@ -40,7 +40,7 @@ function App() {
   const canManageLoans = useMemo(() => user?.role === 'ADMIN' || user?.role === 'LIBRARIAN' || user?.role === 'CLERK', [user])
   const isAdmin = useMemo(() => user?.role === 'ADMIN', [user])
 
-  const canSeeDashboard = useMemo(() => canManageLoans, [canManageLoans])
+  const canSeeDashboard = useMemo(() => !!user, [user])
 
   useEffect(() => {
     if (!token) return
@@ -191,7 +191,7 @@ function App() {
   }
 
   async function loadDashboardStats() {
-    if (!token || !canManageLoans) return
+    if (!token) return
     try {
       const response = await fetch('/api/dashboard/stats', {
         headers: authHeaders(),
@@ -673,7 +673,20 @@ function App() {
         </header>
 
         <Routes>
-          {canSeeDashboard && <Route path="/dashboard" element={<DashboardPage stats={dashboardStats} isAdmin={isAdmin} />} />}
+          {canSeeDashboard && (
+            <Route 
+              path="/dashboard" 
+              element={
+                <DashboardPage 
+                  stats={dashboardStats} 
+                  isAdmin={isAdmin} 
+                  role={user!.role} 
+                  activeLoans={loanHistory.filter(l => !l.returnDate)} 
+                  loanHistory={loanHistory} 
+                />
+              } 
+            />
+          )}
           <Route path="/books" element={<BooksPage books={books} canManageBooks={canManageBooks} loading={loading} searchBy={searchBy} query={query} onSearchByChange={setSearchBy} onQueryChange={setQuery} onSearchSubmit={onSearchSubmit} onReset={() => void loadAllBooks()} />} />
           {canManageBooks && <Route path="/books/new" element={<BookFormPage books={books} onCreate={createBook} onUpdate={updateBook} onDelete={deleteBook} />} />}
           {canManageBooks && <Route path="/books/:id/edit" element={<BookFormPage books={books} onCreate={createBook} onUpdate={updateBook} onDelete={deleteBook} />} />}

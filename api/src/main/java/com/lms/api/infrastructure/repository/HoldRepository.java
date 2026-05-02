@@ -115,7 +115,7 @@ public class HoldRepository {
 
     public int countAllActiveHolds() {
         Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM hold_request WHERE status = 'ACTIVE'",
+                "SELECT COUNT(*) FROM hold_request WHERE status = 'ACTIVE' OR status = 'READY'",
                 Integer.class
         );
         return count == null ? 0 : count.intValue();

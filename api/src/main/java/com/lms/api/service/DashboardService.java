@@ -18,14 +18,29 @@ public class DashboardService {
         this.userRepository = userRepository;
     }
 
-    public DashboardStatsDto getStats() {
+    public DashboardStatsDto getStats(Integer borrowerId) {
+        if (borrowerId != null) {
+            // Personal stats for Borrower
+            return new DashboardStatsDto(
+                    bookService.countBooks(),
+                    loanService.countActiveLoansForBorrower(borrowerId),
+                    loanService.countOverdueUnpaidForBorrower(borrowerId),
+                    holdService.countActiveHoldsForBorrower(borrowerId),
+                    0, // totalBorrowers (not relevant for borrower)
+                    0, // totalStaff (not relevant for borrower)
+                    loanService.countTotalLoansForBorrower(borrowerId)
+            );
+        }
+        
+        // General stats for Staff
         return new DashboardStatsDto(
                 bookService.countBooks(),
                 loanService.countActiveLoans(),
                 loanService.countOverdueUnpaidLoans(),
                 holdService.countActiveHolds(),
                 userRepository.countBorrowers(),
-                userRepository.countStaff()
+                userRepository.countStaff(),
+                loanService.countTotalLoans()
         );
     }
 }

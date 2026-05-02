@@ -103,6 +103,10 @@ public class HoldService {
         return holdRepository.countAllActiveHolds();
     }
 
+    public int countActiveHoldsForBorrower(int borrowerId) {
+        return holdRepository.countActiveHoldsForBorrower(borrowerId);
+    }
+
     private void ensureBorrowerExists(int borrowerId) {
         UserRepository.UserRow user = userRepository.findById(borrowerId);
         if (user == null || !"BORROWER".equals(user.getRole().name())) {

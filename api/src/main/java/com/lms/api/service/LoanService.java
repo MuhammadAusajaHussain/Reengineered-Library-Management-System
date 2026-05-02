@@ -123,8 +123,24 @@ public class LoanService {
         return loanRepository.countAllActiveLoans();
     }
 
+    public int countTotalLoans() {
+        return loanRepository.countTotalLoans();
+    }
+
+    public int countActiveLoansForBorrower(int borrowerId) {
+        return loanRepository.countActiveLoansForBorrower(borrowerId);
+    }
+
+    public int countTotalLoansForBorrower(int borrowerId) {
+        return loanRepository.countTotalLoansForBorrower(borrowerId);
+    }
+
     public int countOverdueUnpaidLoans() {
         return loanRepository.countOverdueUnpaidLoans(LocalDateTime.now());
+    }
+
+    public int countOverdueUnpaidForBorrower(int borrowerId) {
+        return loanRepository.countOverdueUnpaidForBorrower(borrowerId, LocalDateTime.now());
     }
 
     public List<LoanHistoryDto> getLoanHistory(Integer borrowerId) {

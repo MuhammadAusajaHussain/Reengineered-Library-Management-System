@@ -7,14 +7,16 @@ public class DashboardStatsDto {
     private final int activeHolds;
     private final int totalBorrowers;
     private final int totalStaff;
+    private final int totalLoans;
 
-    public DashboardStatsDto(int totalBooks, int activeLoans, int overdueUnpaidLoans, int activeHolds, int totalBorrowers, int totalStaff) {
+    public DashboardStatsDto(int totalBooks, int activeLoans, int overdueUnpaidLoans, int activeHolds, int totalBorrowers, int totalStaff, int totalLoans) {
         this.totalBooks = totalBooks;
         this.activeLoans = activeLoans;
         this.overdueUnpaidLoans = overdueUnpaidLoans;
         this.activeHolds = activeHolds;
         this.totalBorrowers = totalBorrowers;
         this.totalStaff = totalStaff;
+        this.totalLoans = totalLoans;
     }
 
     public int getTotalBooks() { return totalBooks; }
@@ -23,4 +25,5 @@ public class DashboardStatsDto {
     public int getActiveHolds() { return activeHolds; }
     public int getTotalBorrowers() { return totalBorrowers; }
     public int getTotalStaff() { return totalStaff; }
+    public int getTotalLoans() { return totalLoans; }
 }
