@@ -1,76 +1,24 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-
-type Book = {
-  id: number
-  isbn: string
-  title: string
-  author: string
-  subject: string
-  issued: boolean
-  totalCopies: number
-  availableCopies: number
-}
-
-type Borrower = {
-  id: number
-  name: string
-  address: string
-  phoneNumber: string
-  borrowedBooksCount: number
-  onHoldBooksCount: number
-}
-
-type User = {
-  userId: number
-  username: string
-  fullName: string
-  role: 'ADMIN' | 'LIBRARIAN' | 'CLERK' | 'BORROWER'
-}
-
-type ActiveLoan = {
-  loanId: number
-  borrowerId: number
-  bookId: number
-  bookTitle: string
-  dueDate: string
-  pendingFine: number
-  finePaid: boolean
-}
-
-type HoldItem = {
-  id: number
-  bookId: number
-  bookTitle: string
-  requestDate: string
-  status: string
-}
-
-type DashboardStats = {
-  totalBooks: number
-  activeLoans: number
-  overdueUnpaidLoans: number
-  activeHolds: number
-  totalBorrowers: number
-}
-
-type LoanHistory = {
-  loanId: number
-  borrowerId: number
-  bookId: number
-  bookTitle: string
-  issueDate: string
-  dueDate: string
-  returnDate: string | null
-  finePaid: boolean
-}
+import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
+import type { ActiveLoan, Book, Borrower, DashboardStats, HoldItem, LoanHistory, ManagedUser, Role, User } from './types'
+import LoginPage from './pages/LoginPage'
+import DashboardPage from './pages/DashboardPage'
+import BooksPage from './pages/BooksPage'
+import BookFormPage from './pages/BookFormPage'
+import BorrowersPage from './pages/BorrowersPage'
+import BorrowerFormPage from './pages/BorrowerFormPage'
+import UsersPage from './pages/UsersPage'
+import UserFormPage from './pages/UserFormPage'
+import CirculationPage from './pages/CirculationPage'
+import LoansPage from './pages/LoansPage'
+import HoldsPage from './pages/HoldsPage'
 
 function App() {
   const [token, setToken] = useState('')
   const [user, setUser] = useState<User | null>(null)
-  const [username, setUsername] = useState('admin')
-  const [password, setPassword] = useState('admin')
-
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [books, setBooks] = useState<Book[]>([])
   const [borrowers, setBorrowers] = useState<Borrower[]>([])
   const [borrower, setBorrower] = useState<Borrower | null>(null)
@@ -78,40 +26,12 @@ function App() {
   const [query, setQuery] = useState('')
   const [borrowerId, setBorrowerId] = useState('')
   const [bookId, setBookId] = useState('')
-  const [newBorrowerUsername, setNewBorrowerUsername] = useState('')
-  const [newBorrowerPassword, setNewBorrowerPassword] = useState('')
-  const [newBorrowerName, setNewBorrowerName] = useState('')
-  const [newBorrowerAddress, setNewBorrowerAddress] = useState('')
-  const [newBorrowerPhone, setNewBorrowerPhone] = useState('')
-  const [newBookTitle, setNewBookTitle] = useState('')
-  const [newBookAuthor, setNewBookAuthor] = useState('')
-  const [newBookSubject, setNewBookSubject] = useState('')
-  const [newBookIsbn, setNewBookIsbn] = useState('')
-  const [newBookCopies, setNewBookCopies] = useState('1')
   const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([])
   const [holds, setHolds] = useState<HoldItem[]>([])
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null)
   const [fineLoanId, setFineLoanId] = useState('')
   const [loanHistory, setLoanHistory] = useState<LoanHistory[]>([])
-  const [editBookId, setEditBookId] = useState('')
-  const [editBookIsbn, setEditBookIsbn] = useState('')
-  const [editBookTitle, setEditBookTitle] = useState('')
-  const [editBookAuthor, setEditBookAuthor] = useState('')
-  const [editBookSubject, setEditBookSubject] = useState('')
-  const [editBookTotalCopies, setEditBookTotalCopies] = useState('1')
-  const [deleteBookId, setDeleteBookId] = useState('')
-  const [users, setUsers] = useState<Array<{ id: number; username: string; fullName: string; role: string; active: boolean }>>([])
-  const [newUserUsername, setNewUserUsername] = useState('')
-  const [newUserPassword, setNewUserPassword] = useState('')
-  const [newUserFullName, setNewUserFullName] = useState('')
-  const [newUserRole, setNewUserRole] = useState<'ADMIN' | 'LIBRARIAN' | 'CLERK' | 'BORROWER'>('CLERK')
-  const [newUserActive, setNewUserActive] = useState(true)
-  const [editUserId, setEditUserId] = useState('')
-  const [editUserFullName, setEditUserFullName] = useState('')
-  const [editUserRole, setEditUserRole] = useState<'ADMIN' | 'LIBRARIAN' | 'CLERK' | 'BORROWER'>('CLERK')
-  const [editUserActive, setEditUserActive] = useState(true)
-  const [editUserPassword, setEditUserPassword] = useState('')
-  const [deleteUserId, setDeleteUserId] = useState('')
+  const [users, setUsers] = useState<ManagedUser[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -119,6 +39,8 @@ function App() {
   const canManageBooks = useMemo(() => user?.role === 'ADMIN' || user?.role === 'LIBRARIAN', [user])
   const canManageLoans = useMemo(() => user?.role === 'ADMIN' || user?.role === 'LIBRARIAN' || user?.role === 'CLERK', [user])
   const isAdmin = useMemo(() => user?.role === 'ADMIN', [user])
+
+  const canSeeDashboard = useMemo(() => canManageLoans, [canManageLoans])
 
   useEffect(() => {
     if (!token) return
@@ -295,15 +217,14 @@ function App() {
     try {
       const response = await fetch('/api/users', { headers: authHeaders() })
       if (!response.ok) return
-      const data = (await response.json()) as Array<{ id: number; username: string; fullName: string; role: string; active: boolean }>
+      const data = (await response.json()) as ManagedUser[]
       setUsers(data)
     } catch {
       // no-op
     }
   }
 
-  async function createUser(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function createUser(payload: { username: string; password: string; fullName: string; role: Role; active: boolean }) {
     setLoading(true)
     setError(null)
     setMessage(null)
@@ -312,11 +233,11 @@ function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
-          username: newUserUsername,
-          password: newUserPassword,
-          fullName: newUserFullName,
-          role: newUserRole,
-          active: newUserActive,
+          username: payload.username,
+          password: payload.password,
+          fullName: payload.fullName,
+          role: payload.role,
+          active: payload.active,
         }),
       })
       if (!response.ok) {
@@ -324,11 +245,6 @@ function App() {
         throw new Error(payload?.error ?? 'Failed to create user')
       }
       setMessage('User created successfully')
-      setNewUserUsername('')
-      setNewUserPassword('')
-      setNewUserFullName('')
-      setNewUserRole('CLERK')
-      setNewUserActive(true)
       await loadUsers()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -337,30 +253,21 @@ function App() {
     }
   }
 
-  async function updateUser() {
-    if (!editUserId.trim()) return
+  async function updateUser(userId: number, payload: { fullName?: string; role: Role; active: boolean; password?: string }) {
     setLoading(true)
     setError(null)
     setMessage(null)
     try {
-      const response = await fetch(`/api/users/${Number(editUserId)}`, {
+      const response = await fetch(`/api/users/${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({
-          fullName: editUserFullName || undefined,
-          role: editUserRole,
-          active: editUserActive,
-          password: editUserPassword || undefined,
-        }),
+        body: JSON.stringify(payload),
       })
       if (!response.ok) {
         const payload = await response.json().catch(() => null)
         throw new Error(payload?.error ?? 'Failed to update user')
       }
       setMessage('User updated successfully')
-      setEditUserId('')
-      setEditUserFullName('')
-      setEditUserPassword('')
       await loadUsers()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -369,13 +276,12 @@ function App() {
     }
   }
 
-  async function deleteUser() {
-    if (!deleteUserId.trim()) return
+  async function deleteUser(userId: number) {
     setLoading(true)
     setError(null)
     setMessage(null)
     try {
-      const response = await fetch(`/api/users/${Number(deleteUserId)}`, {
+      const response = await fetch(`/api/users/${userId}`, {
         method: 'DELETE',
         headers: authHeaders(),
       })
@@ -384,7 +290,6 @@ function App() {
         throw new Error(payload?.error ?? 'Failed to delete user')
       }
       setMessage('User deleted successfully')
-      setDeleteUserId('')
       await loadUsers()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -545,34 +450,21 @@ function App() {
     }
   }
 
-  async function updateBook() {
-    if (!editBookId.trim()) return
+  async function updateBook(bookIdToUpdate: number, payload: { isbn: string; title: string; author: string; subject: string; totalCopies: number }) {
     setLoading(true)
     setError(null)
     setMessage(null)
     try {
-      const response = await fetch(`/api/books/${Number(editBookId)}`, {
+      const response = await fetch(`/api/books/${bookIdToUpdate}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({
-          isbn: editBookIsbn || null,
-          title: editBookTitle,
-          author: editBookAuthor,
-          subject: editBookSubject,
-          totalCopies: Number(editBookTotalCopies),
-        }),
+        body: JSON.stringify(payload),
       })
       if (!response.ok) {
         const payload = await response.json().catch(() => null)
         throw new Error(payload?.error ?? 'Failed to update book')
       }
       setMessage('Book updated successfully')
-      setEditBookId('')
-      setEditBookIsbn('')
-      setEditBookTitle('')
-      setEditBookAuthor('')
-      setEditBookSubject('')
-      setEditBookTotalCopies('1')
       await loadAllBooks()
       await loadDashboardStats()
     } catch (err) {
@@ -582,13 +474,12 @@ function App() {
     }
   }
 
-  async function deleteBook() {
-    if (!deleteBookId.trim()) return
+  async function deleteBook(bookIdToDelete: number) {
     setLoading(true)
     setError(null)
     setMessage(null)
     try {
-      const response = await fetch(`/api/books/${Number(deleteBookId)}`, {
+      const response = await fetch(`/api/books/${bookIdToDelete}`, {
         method: 'DELETE',
         headers: authHeaders(),
       })
@@ -597,7 +488,6 @@ function App() {
         throw new Error(payload?.error ?? 'Failed to delete book')
       }
       setMessage('Book deleted successfully')
-      setDeleteBookId('')
       await loadAllBooks()
       await loadDashboardStats()
     } catch (err) {
@@ -607,8 +497,7 @@ function App() {
     }
   }
 
-  async function createBorrower(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function createBorrower(payload: { username: string; password: string; fullName: string; address: string; phoneNo: string }) {
     setLoading(true)
     setError(null)
     setMessage(null)
@@ -617,11 +506,11 @@ function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
-          username: newBorrowerUsername,
-          password: newBorrowerPassword,
-          fullName: newBorrowerName,
-          address: newBorrowerAddress,
-          phoneNo: newBorrowerPhone,
+          username: payload.username,
+          password: payload.password,
+          fullName: payload.fullName,
+          address: payload.address,
+          phoneNo: payload.phoneNo,
         }),
       })
       if (!response.ok) {
@@ -630,11 +519,6 @@ function App() {
       }
       const created: Borrower = await response.json()
       setMessage(`Borrower created with ID ${created.id}`)
-      setNewBorrowerUsername('')
-      setNewBorrowerPassword('')
-      setNewBorrowerName('')
-      setNewBorrowerAddress('')
-      setNewBorrowerPhone('')
       await loadBorrowers()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -643,8 +527,7 @@ function App() {
     }
   }
 
-  async function createBook(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function createBook(payload: { isbn: string; title: string; author: string; subject: string; copies: number }) {
     setLoading(true)
     setError(null)
     setMessage(null)
@@ -653,11 +536,11 @@ function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
-          isbn: newBookIsbn,
-          title: newBookTitle,
-          author: newBookAuthor,
-          subject: newBookSubject,
-          copies: Number(newBookCopies),
+          isbn: payload.isbn,
+          title: payload.title,
+          author: payload.author,
+          subject: payload.subject,
+          copies: payload.copies,
         }),
       })
       if (!response.ok) {
@@ -666,11 +549,6 @@ function App() {
       }
       const created: Book = await response.json()
       setMessage(`Book created with ID ${created.id}`)
-      setNewBookTitle('')
-      setNewBookAuthor('')
-      setNewBookSubject('')
-      setNewBookIsbn('')
-      setNewBookCopies('1')
       await loadAllBooks()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -679,312 +557,81 @@ function App() {
     }
   }
 
+  async function updateBorrower(borrowerIdToUpdate: number, payload: { fullName: string; address: string; phoneNo: string }) {
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch(`/api/borrowers/${borrowerIdToUpdate}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify(payload),
+      })
+      if (!response.ok) {
+        const body = await response.json().catch(() => null)
+        throw new Error(body?.error ?? 'Failed to update borrower')
+      }
+      setMessage('Borrower updated successfully')
+      await loadBorrowers()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (!token || !user) {
-    return (
-      <main className="page">
-        <header className="page-header">
-          <h1>Library Management System</h1>
-          <p>Reengineered web frontend with role-based login</p>
-        </header>
-        <section className="card">
-          <h2>Login</h2>
-          <form onSubmit={login} className="search-form">
-            <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" />
-            <input
-              value={password}
-              type="password"
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-            />
-            <button type="submit">Login</button>
-          </form>
-          <p className="hint">
-            Demo users: <code>admin/admin</code>, <code>librarian1/librarian</code>, <code>clerk1/clerk</code>, <code>borrower1/borrower</code>
-          </p>
-          {loading && <p>Loading...</p>}
-          {error && <p className="error">{error}</p>}
-        </section>
-      </main>
-    )
+    return <LoginPage username={username} password={password} loading={loading} error={error} setUsername={setUsername} setPassword={setPassword} login={login} />
+  }
+
+  function routeClassName({ isActive }: { isActive: boolean }) {
+    return isActive ? 'sidebar-link active' : 'sidebar-link'
   }
 
   return (
-    <main className="page">
-      <header className="page-header">
-        <h1>Library Management System</h1>
-        <p>Welcome {user.fullName} ({user.role})</p>
-      </header>
+    <main className="layout">
+      <aside className="sidebar">
+        <h2>LMS</h2>
+        <p>{user.fullName}</p>
+        <p className="role">{user.role}</p>
+        <nav className="sidebar-nav">
+          {canSeeDashboard && <NavLink to="/dashboard" className={routeClassName}>Dashboard</NavLink>}
+          <NavLink to="/books" className={routeClassName}>Books</NavLink>
+          <NavLink to="/circulation" className={routeClassName}>Circulation</NavLink>
+          <NavLink to="/loans" className={routeClassName}>Loans</NavLink>
+          <NavLink to="/holds" className={routeClassName}>Holds</NavLink>
+          {canManageLoans && <NavLink to="/borrowers" className={routeClassName}>Borrowers</NavLink>}
+          {isAdmin && <NavLink to="/users" className={routeClassName}>User Management</NavLink>}
+          <button type="button" onClick={() => { setToken(''); setUser(null); setPassword('') }}>Logout</button>
+        </nav>
+      </aside>
 
-      {dashboardStats && (
-        <section className="card">
-          <h2>Dashboard</h2>
-          <div className="stats-grid">
-            <p>Total Books: <strong>{dashboardStats.totalBooks}</strong></p>
-            <p>Active Loans: <strong>{dashboardStats.activeLoans}</strong></p>
-            <p>Overdue Unpaid Loans: <strong>{dashboardStats.overdueUnpaidLoans}</strong></p>
-            <p>Active Holds: <strong>{dashboardStats.activeHolds}</strong></p>
-            <p>Total Borrowers: <strong>{dashboardStats.totalBorrowers}</strong></p>
-          </div>
-        </section>
-      )}
+      <section className="content">
+        <header className="page-header">
+          <h1>Library Management System</h1>
+          {error && <p className="error">{error}</p>}
+          {message && <p className="message">{message}</p>}
+          {loading && <p>Loading...</p>}
+        </header>
 
-      {isAdmin && (
-        <section className="card">
-          <h2>Admin: User Management</h2>
-
-          <h3>Create user</h3>
-          <form onSubmit={createUser} className="actions-grid">
-            <input value={newUserUsername} onChange={(e) => setNewUserUsername(e.target.value)} placeholder="Username" />
-            <input value={newUserPassword} type="password" onChange={(e) => setNewUserPassword(e.target.value)} placeholder="Password" />
-            <input value={newUserFullName} onChange={(e) => setNewUserFullName(e.target.value)} placeholder="Full name" />
-            <select value={newUserRole} onChange={(e) => setNewUserRole(e.target.value as any)}>
-              <option value="ADMIN">ADMIN</option>
-              <option value="LIBRARIAN">LIBRARIAN</option>
-              <option value="CLERK">CLERK</option>
-              <option value="BORROWER">BORROWER</option>
-            </select>
-            <label className="checkbox">
-              <input type="checkbox" checked={newUserActive} onChange={(e) => setNewUserActive(e.target.checked)} />
-              Active
-            </label>
-            <button type="submit">Create</button>
-          </form>
-
-          <h3>Update user</h3>
-          <div className="actions-grid">
-            <input value={editUserId} onChange={(e) => setEditUserId(e.target.value)} placeholder="User ID" />
-            <input value={editUserFullName} onChange={(e) => setEditUserFullName(e.target.value)} placeholder="New full name (optional)" />
-            <input value={editUserPassword} type="password" onChange={(e) => setEditUserPassword(e.target.value)} placeholder="New password (optional)" />
-            <select value={editUserRole} onChange={(e) => setEditUserRole(e.target.value as any)}>
-              <option value="ADMIN">ADMIN</option>
-              <option value="LIBRARIAN">LIBRARIAN</option>
-              <option value="CLERK">CLERK</option>
-              <option value="BORROWER">BORROWER</option>
-            </select>
-            <label className="checkbox">
-              <input type="checkbox" checked={editUserActive} onChange={(e) => setEditUserActive(e.target.checked)} />
-              Active
-            </label>
-            <button type="button" onClick={() => void updateUser()}>Update</button>
-          </div>
-
-          <h3>Delete user</h3>
-          <div className="actions-grid">
-            <input value={deleteUserId} onChange={(e) => setDeleteUserId(e.target.value)} placeholder="User ID" />
-            <button type="button" onClick={() => void deleteUser()}>Delete</button>
-          </div>
-
-          <h3>All users</h3>
-          <div className="borrower-list">
-            {users.map((u) => (
-              <p key={u.id}>
-                #{u.id} | {u.username} | {u.fullName} | {u.role} | {u.active ? 'Active' : 'Inactive'}
-              </p>
-            ))}
-            {users.length === 0 && <p>No users loaded.</p>}
-          </div>
-        </section>
-      )}
-
-      <section className="card">
-        <form onSubmit={onSearchSubmit} className="search-form">
-          <select value={searchBy} onChange={(event) => setSearchBy(event.target.value as 'title' | 'author' | 'subject')}>
-            <option value="title">Title</option>
-            <option value="author">Author</option>
-            <option value="subject">Subject</option>
-          </select>
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={`Search by ${searchBy}`}
-          />
-          <button type="submit">Search</button>
-          <button type="button" onClick={() => void loadAllBooks()}>Reset</button>
-        </form>
-
-        {loading && <p>Loading...</p>}
-        {error && <p className="error">{error}</p>}
-
-        {!loading && !error && (
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>ISBN</th>
-                <th>Title</th>
-                <th>Author</th>
-                <th>Subject</th>
-                <th>Copies</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {books.map((book) => (
-                <tr key={book.id}>
-                  <td>{book.id}</td>
-                  <td>{book.isbn || '-'}</td>
-                  <td>{book.title}</td>
-                  <td>{book.author}</td>
-                  <td>{book.subject}</td>
-                  <td>{book.availableCopies}/{book.totalCopies}</td>
-                  <td>{book.issued ? 'Issued' : 'Available'}</td>
-                </tr>
-              ))}
-              {books.length === 0 && (
-                <tr>
-                  <td colSpan={7}>No books found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
+        <Routes>
+          {canSeeDashboard && <Route path="/dashboard" element={<DashboardPage stats={dashboardStats} />} />}
+          <Route path="/books" element={<BooksPage books={books} canManageBooks={canManageBooks} loading={loading} searchBy={searchBy} query={query} onSearchByChange={setSearchBy} onQueryChange={setQuery} onSearchSubmit={onSearchSubmit} onReset={() => void loadAllBooks()} />} />
+          {canManageBooks && <Route path="/books/new" element={<BookFormPage books={books} onCreate={createBook} onUpdate={updateBook} onDelete={deleteBook} />} />}
+          {canManageBooks && <Route path="/books/:id/edit" element={<BookFormPage books={books} onCreate={createBook} onUpdate={updateBook} onDelete={deleteBook} />} />}
+          <Route path="/circulation" element={<CirculationPage borrower={borrower} borrowerId={borrowerId} bookId={bookId} canManageLoans={canManageLoans} setBorrowerId={setBorrowerId} setBookId={setBookId} loadBorrower={loadBorrower} loadHolds={loadHolds} processLoan={processLoan} renewLoan={renewLoan} placeHold={placeHold} />} />
+          <Route path="/loans" element={<LoansPage canManageLoans={canManageLoans} activeLoans={activeLoans} loanHistory={loanHistory} fineLoanId={fineLoanId} setFineLoanId={setFineLoanId} payFine={payFine} />} />
+          <Route path="/holds" element={<HoldsPage holds={holds} canManageLoans={canManageLoans} checkoutReadyHold={checkoutReadyHold} />} />
+          {canManageLoans && <Route path="/borrowers" element={<BorrowersPage borrowers={borrowers} />} />}
+          {canManageLoans && <Route path="/borrowers/new" element={<BorrowerFormPage borrowers={borrowers} onCreate={createBorrower} onUpdate={updateBorrower} />} />}
+          {canManageLoans && <Route path="/borrowers/:id/edit" element={<BorrowerFormPage borrowers={borrowers} onCreate={createBorrower} onUpdate={updateBorrower} />} />}
+          {isAdmin && <Route path="/users" element={<UsersPage users={users} />} />}
+          {isAdmin && <Route path="/users/new" element={<UserFormPage users={users} onCreate={createUser} onUpdate={updateUser} onDelete={deleteUser} />} />}
+          {isAdmin && <Route path="/users/:id/edit" element={<UserFormPage users={users} onCreate={createUser} onUpdate={updateUser} onDelete={deleteUser} />} />}
+          <Route path="/" element={<Navigate to={canSeeDashboard ? '/dashboard' : '/books'} replace />} />
+          <Route path="*" element={<Navigate to={canSeeDashboard ? '/dashboard' : '/books'} replace />} />
+        </Routes>
       </section>
-
-      {canManageBooks && (
-        <section className="card">
-          <h2>Add Book</h2>
-          <form onSubmit={createBook} className="actions-grid">
-            <input value={newBookIsbn} onChange={(e) => setNewBookIsbn(e.target.value)} placeholder="ISBN (optional)" />
-            <input value={newBookTitle} onChange={(e) => setNewBookTitle(e.target.value)} placeholder="Title" />
-            <input value={newBookAuthor} onChange={(e) => setNewBookAuthor(e.target.value)} placeholder="Author" />
-            <input value={newBookSubject} onChange={(e) => setNewBookSubject(e.target.value)} placeholder="Subject" />
-            <input value={newBookCopies} onChange={(e) => setNewBookCopies(e.target.value)} placeholder="Copies" />
-            <button type="submit">Add Book</button>
-          </form>
-        </section>
-      )}
-
-      {canManageBooks && (
-        <section className="card">
-          <h2>Edit / Delete Book</h2>
-          <div className="actions-grid">
-            <input value={editBookId} onChange={(e) => setEditBookId(e.target.value)} placeholder="Book ID" />
-            <input value={editBookIsbn} onChange={(e) => setEditBookIsbn(e.target.value)} placeholder="ISBN (optional)" />
-            <input value={editBookTitle} onChange={(e) => setEditBookTitle(e.target.value)} placeholder="Title" />
-            <input value={editBookAuthor} onChange={(e) => setEditBookAuthor(e.target.value)} placeholder="Author" />
-            <input value={editBookSubject} onChange={(e) => setEditBookSubject(e.target.value)} placeholder="Subject" />
-            <input value={editBookTotalCopies} onChange={(e) => setEditBookTotalCopies(e.target.value)} placeholder="Total copies" />
-            <button type="button" onClick={() => void updateBook()}>Update Book</button>
-          </div>
-          <div className="actions-grid">
-            <input value={deleteBookId} onChange={(e) => setDeleteBookId(e.target.value)} placeholder="Book ID to delete" />
-            <button type="button" onClick={() => void deleteBook()}>Delete Book</button>
-          </div>
-        </section>
-      )}
-
-      <section className="card">
-        <h2>Borrower & Circulation</h2>
-        <div className="actions-grid">
-          <input
-            value={borrowerId}
-            onChange={(event) => setBorrowerId(event.target.value)}
-            placeholder="Borrower ID"
-          />
-          <input
-            value={bookId}
-            onChange={(event) => setBookId(event.target.value)}
-            placeholder="Book ID"
-          />
-          <button type="button" onClick={() => void loadBorrower()}>Load Borrower</button>
-          <button type="button" onClick={() => void loadHolds()}>Load Holds</button>
-          {canManageLoans && <button type="button" onClick={() => void processLoan('checkout')}>Checkout</button>}
-          {canManageLoans && <button type="button" onClick={() => void processLoan('checkin')}>Check-In</button>}
-          <button type="button" onClick={() => void renewLoan()}>Renew</button>
-          <button type="button" onClick={() => void placeHold()}>Place Hold</button>
-        </div>
-
-        {borrower && (
-          <div className="borrower-box">
-            <strong>{borrower.name}</strong>
-            <p>ID: {borrower.id}</p>
-            <p>Address: {borrower.address}</p>
-            <p>Phone: {borrower.phoneNumber}</p>
-            <p>Borrowed Books: {borrower.borrowedBooksCount}</p>
-            <p>Hold Requests: {borrower.onHoldBooksCount}</p>
-          </div>
-        )}
-
-        {message && <p className="message">{message}</p>}
-      </section>
-
-      <section className="card">
-        <h2>Active Loans & Fine Payment</h2>
-        <div className="actions-grid">
-          <input value={fineLoanId} onChange={(e) => setFineLoanId(e.target.value)} placeholder="Loan ID for fine payment" />
-          {canManageLoans && <button type="button" onClick={() => void payFine()}>Mark Fine Paid</button>}
-        </div>
-        {activeLoans.length > 0 ? (
-          <div className="borrower-list">
-            {activeLoans.map((loan) => (
-              <p key={loan.loanId}>
-                Loan #{loan.loanId} | Borrower #{loan.borrowerId} | {loan.bookTitle} | Due: {loan.dueDate.slice(0, 10)} | Pending fine: Rs {loan.pendingFine} | Fine paid: {loan.finePaid ? 'Yes' : 'No'}
-              </p>
-            ))}
-          </div>
-        ) : <p>No active loans.</p>}
-      </section>
-
-      <section className="card">
-        <h2>Hold Requests</h2>
-        {holds.length > 0 ? (
-          <div className="borrower-list">
-            {holds.map((hold) => (
-              <p key={hold.id}>
-                Hold #{hold.id} | Book #{hold.bookId} ({hold.bookTitle}) | Requested: {hold.requestDate.slice(0, 10)} | {hold.status}
-                {canManageLoans && hold.status === 'READY' && (
-                  <>
-                    {' '}| <button type="button" onClick={() => void checkoutReadyHold(hold.id)}>Checkout READY Hold</button>
-                  </>
-                )}
-              </p>
-            ))}
-          </div>
-        ) : <p>No hold requests loaded.</p>}
-      </section>
-
-      <section className="card">
-        <h2>Loan History</h2>
-        {loanHistory.length > 0 ? (
-          <div className="borrower-list">
-            {loanHistory.map((loan) => (
-              <p key={loan.loanId}>
-                Loan #{loan.loanId} | Borrower #{loan.borrowerId} | {loan.bookTitle} | Issued: {loan.issueDate.slice(0, 10)} | Due: {loan.dueDate.slice(0, 10)} | Returned: {loan.returnDate ? loan.returnDate.slice(0, 10) : '-'} | Fine paid: {loan.finePaid ? 'Yes' : 'No'}
-              </p>
-            ))}
-          </div>
-        ) : <p>No loan history.</p>}
-      </section>
-
-      {canManageLoans && (
-        <section className="card">
-          <h2>Register Borrower</h2>
-          <form onSubmit={createBorrower} className="actions-grid">
-            <input value={newBorrowerUsername} onChange={(e) => setNewBorrowerUsername(e.target.value)} placeholder="Username" />
-            <input
-              value={newBorrowerPassword}
-              type="password"
-              onChange={(e) => setNewBorrowerPassword(e.target.value)}
-              placeholder="Password"
-            />
-            <input value={newBorrowerName} onChange={(e) => setNewBorrowerName(e.target.value)} placeholder="Full Name" />
-            <input value={newBorrowerAddress} onChange={(e) => setNewBorrowerAddress(e.target.value)} placeholder="Address" />
-            <input value={newBorrowerPhone} onChange={(e) => setNewBorrowerPhone(e.target.value)} placeholder="Phone" />
-            <button type="submit">Create Borrower</button>
-          </form>
-
-          {borrowers.length > 0 && (
-            <div className="borrower-list">
-              <h3>All Borrowers</h3>
-              {borrowers.map((item) => (
-                <p key={item.id}>
-                  #{item.id} - {item.name} ({item.phoneNumber}) | Borrowed: {item.borrowedBooksCount}
-                </p>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
     </main>
   )
 }

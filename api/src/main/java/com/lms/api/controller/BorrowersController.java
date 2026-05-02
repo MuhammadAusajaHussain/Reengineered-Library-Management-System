@@ -2,6 +2,7 @@ package com.lms.api.controller;
 
 import com.lms.api.dto.BorrowerDto;
 import com.lms.api.dto.CreateBorrowerRequest;
+import com.lms.api.dto.UpdateBorrowerRequest;
 import com.lms.api.domain.Role;
 import com.lms.api.infrastructure.session.SessionUser;
 import com.lms.api.service.AuthService;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PutMapping;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -48,5 +50,16 @@ public class BorrowersController {
         SessionUser sessionUser = authService.getSessionUser(authorization);
         authService.requireAnyRole(sessionUser, Role.ADMIN, Role.LIBRARIAN, Role.CLERK);
         return borrowerService.createBorrower(request);
+    }
+
+    @PutMapping("/{id}")
+    public BorrowerDto updateBorrower(
+            @PathVariable int id,
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @Valid @RequestBody UpdateBorrowerRequest request
+    ) {
+        SessionUser sessionUser = authService.getSessionUser(authorization);
+        authService.requireAnyRole(sessionUser, Role.ADMIN, Role.LIBRARIAN, Role.CLERK);
+        return borrowerService.updateBorrower(id, request);
     }
 }

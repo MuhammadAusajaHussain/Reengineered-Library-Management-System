@@ -27,11 +27,16 @@ public class BootstrapAdminInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         String username = safe(properties.getUsername(), "admin");
-        String password = safe(properties.getPassword(), "admin");
+        String password = safe(properties.getPassword(), null);
         String fullName = safe(properties.getFullName(), "System Admin");
-        String passwordHash = PasswordHasher.sha256(password);
 
         UserRepository.UserRow existing = userRepository.findByUsername(username);
+        if (password == null && existing == null) {
+            log.warn("Admin bootstrap skipped: no bootstrap password configured and admin user '{}' does not exist.", username);
+            return;
+        }
+
+        String passwordHash = PasswordHasher.sha256(password == null ? "" : password);
         if (existing == null) {
             jdbcTemplate.update(
                     "INSERT INTO app_user (username, password_hash, full_name, role, active) VALUES (?, ?, ?, ?, ?)",
@@ -41,7 +46,7 @@ public class BootstrapAdminInitializer implements ApplicationRunner {
             return;
         }
 
-        if (properties.isResetPassword() && !passwordHash.equals(existing.getPasswordHash())) {
+        if (password != null && properties.isResetPassword() && !passwordHash.equals(existing.getPasswordHash())) {
             jdbcTemplate.update(
                     "UPDATE app_user SET password_hash = ? WHERE id = ?",
                     passwordHash,

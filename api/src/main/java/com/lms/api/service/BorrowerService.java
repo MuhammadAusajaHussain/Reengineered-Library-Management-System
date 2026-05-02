@@ -2,6 +2,7 @@ package com.lms.api.service;
 
 import com.lms.api.dto.BorrowerDto;
 import com.lms.api.dto.CreateBorrowerRequest;
+import com.lms.api.dto.UpdateBorrowerRequest;
 import com.lms.api.exception.BadRequestException;
 import com.lms.api.exception.NotFoundException;
 import com.lms.api.infrastructure.repository.HoldRepository;
@@ -47,6 +48,20 @@ public class BorrowerService {
         int id = userRepository.createBorrower(
                 request.getUsername().trim(),
                 PasswordHasher.sha256(request.getPassword()),
+                request.getFullName().trim(),
+                request.getAddress().trim(),
+                request.getPhoneNo().trim()
+        );
+        return getBorrower(id);
+    }
+
+    public BorrowerDto updateBorrower(int id, UpdateBorrowerRequest request) {
+        UserRepository.BorrowerProfileRow existing = userRepository.findBorrowerById(id);
+        if (existing == null) {
+            throw new NotFoundException("Borrower not found: " + id);
+        }
+        userRepository.updateBorrower(
+                id,
                 request.getFullName().trim(),
                 request.getAddress().trim(),
                 request.getPhoneNo().trim()

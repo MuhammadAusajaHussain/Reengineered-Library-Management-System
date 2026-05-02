@@ -103,6 +103,11 @@ public class UserRepository {
         );
     }
 
+    public void updateBorrower(int borrowerId, String fullName, String address, String phoneNo) {
+        jdbcTemplate.update("UPDATE app_user SET full_name = ? WHERE id = ? AND role = 'BORROWER'", fullName, borrowerId);
+        jdbcTemplate.update("UPDATE borrower_profile SET address = ?, phone_no = ? WHERE user_id = ?", address, phoneNo, borrowerId);
+    }
+
     public List<UserSummaryRow> listUsers() {
         return jdbcTemplate.query(
                 "SELECT id, username, full_name, role, active FROM app_user ORDER BY id",
