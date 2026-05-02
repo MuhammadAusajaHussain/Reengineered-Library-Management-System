@@ -14,7 +14,7 @@ export default function LoansPage({ canManageLoans, activeLoans, loanHistory, fi
     <>
       <section className="card">
         <h2>Active Loans</h2>
-        <div className="actions-grid">
+        <div className="inline-row">
           <select value={fineLoanId} onChange={(e) => setFineLoanId(e.target.value)}>
             <option value="">Select Loan to Pay Fine</option>
             {activeLoans.filter(l => l.pendingFine > 0).map(l => (

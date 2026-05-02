@@ -3,9 +3,11 @@ import type { Borrower } from '../types'
 
 type Props = {
   borrowers: Borrower[]
+  isAdmin: boolean
+  onDelete: (id: number) => Promise<void>
 }
 
-export default function BorrowersPage({ borrowers }: Props) {
+export default function BorrowersPage({ borrowers, isAdmin, onDelete }: Props) {
   return (
     <>
       <section className="card">
@@ -24,6 +26,9 @@ export default function BorrowersPage({ borrowers }: Props) {
             <p><strong>Holds:</strong> {item.onHoldBooksCount}</p>
             <div className="card-actions">
               <Link className="btn-link" to={`/borrowers/${item.id}/edit`}>Edit Borrower</Link>
+              {isAdmin && (
+                <button type="button" className="btn-danger" onClick={() => void onDelete(item.id)}>Delete Borrower</button>
+              )}
             </div>
           </article>
         ))}

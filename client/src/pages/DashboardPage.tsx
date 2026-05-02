@@ -2,9 +2,10 @@ import type { DashboardStats } from '../types'
 
 type Props = {
   stats: DashboardStats | null
+  isAdmin: boolean
 }
 
-export default function DashboardPage({ stats }: Props) {
+export default function DashboardPage({ stats, isAdmin }: Props) {
   return (
     <section className="card">
       <h2>Dashboard</h2>
@@ -30,6 +31,12 @@ export default function DashboardPage({ stats }: Props) {
             <span className="value">{stats.totalBorrowers}</span>
             <span className="label">Total Borrowers</span>
           </div>
+          {isAdmin && (
+            <div className="stats-card">
+              <span className="value">{stats.totalStaff}</span>
+              <span className="label">Total Staff</span>
+            </div>
+          )}
         </div>
       ) : (
         <p>Loading dashboard stats...</p>

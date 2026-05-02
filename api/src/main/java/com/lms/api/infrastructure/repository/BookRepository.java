@@ -66,6 +66,39 @@ public class BookRepository {
         return rows.isEmpty() ? null : rows.get(0);
     }
 
+    public BookRow findByIsbn(String isbn) {
+        if (isbn == null || isbn.trim().isEmpty()) return null;
+        List<BookRow> rows = jdbcTemplate.query(
+                "SELECT id, isbn, title, author, subject, total_copies, available_copies FROM book WHERE isbn = ?",
+                new Object[]{isbn},
+                (rs, idx) -> new BookRow(
+                        rs.getInt("id"),
+                        rs.getString("isbn"),
+                        rs.getString("title"),
+                        rs.getString("author"),
+                        rs.getString("subject"),
+                        rs.getInt("total_copies"),
+                        rs.getInt("available_copies")
+                ));
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    public BookRow findByTitleAndAuthor(String title, String author) {
+        List<BookRow> rows = jdbcTemplate.query(
+                "SELECT id, isbn, title, author, subject, total_copies, available_copies FROM book WHERE LOWER(title) = ? AND LOWER(author) = ?",
+                new Object[]{title.toLowerCase(), author.toLowerCase()},
+                (rs, idx) -> new BookRow(
+                        rs.getInt("id"),
+                        rs.getString("isbn"),
+                        rs.getString("title"),
+                        rs.getString("author"),
+                        rs.getString("subject"),
+                        rs.getInt("total_copies"),
+                        rs.getInt("available_copies")
+                ));
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
     public int create(String isbn, String title, String author, String subject, int copies) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {

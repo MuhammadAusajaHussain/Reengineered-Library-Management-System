@@ -34,8 +34,9 @@ This document explains what each user role can see in the new routed web UI and 
   - Checkout, check-in, and renew books.
   - Place holds and process READY hold checkout.
   - Mark fines as paid.
-  - Register borrowers.
+  - Register borrowers (from both Borrowers and User Management pages).
   - Create, update, and delete users (all roles).
+  - Delete borrowers directly from the Borrowers page.
 
 ## Librarian Flow
 

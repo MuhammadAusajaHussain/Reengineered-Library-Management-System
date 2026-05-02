@@ -294,16 +294,51 @@ select option {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.25rem;
-  max-width: 500px;
+  width: 100%;
+}
+
+.search-bar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.search-bar select {
+  flex: 0 0 30%;
+}
+
+.search-bar input {
+  flex: 1;
+}
+
+.search-bar button {
+  white-space: nowrap;
 }
 
 .form-grid.two-columns, .search-form.two-columns, .actions-grid.two-columns {
   grid-template-columns: repeat(2, 1fr);
-  max-width: 900px;
 }
 
-.form-grid .card-actions, .search-form .card-actions, .actions-grid .card-actions {
+.form-grid .card-actions, .search-form .card-actions, .actions-grid .card-actions, .search-bar .card-actions {
   grid-column: 1 / -1;
+}
+
+.inline-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+}
+
+.inline-row select, .inline-row input {
+  flex: 1;
+}
+
+.inline-row button {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .stats-grid {

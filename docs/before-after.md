@@ -16,6 +16,9 @@
 - Persistent embedded Derby DB retained (no destructive stack migration).
 - Role-based operations exposed via explicit endpoints.
 - Request-id logging + access logs + centralized exception handling.
+- **Glassmorphism UI:** Premium dark-themed interface with backdrop blur, smooth transitions, and responsive smart-grid forms.
+- **Data Integrity:** Self-healing inventory logic that reconciles active loans with book availability on startup.
+- **Unified Management:** Synchronized User and Borrower management with conditional form fields.
 
 ## Architectural Shift
 - **From** monolithic console orchestration

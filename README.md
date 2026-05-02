@@ -69,6 +69,18 @@ The frontend starts at: `http://localhost:8080`
 
 ---
 
+## Running on a New System
+
+This project is designed for maximum portability. When cloning to a new system:
+
+1.  **Zero Database Setup:** You do **not** need to install any database server (MySQL/PostgreSQL). The system uses an embedded Apache Derby database.
+2.  **Self-Bootstrap:** On the first run, the backend automatically creates the `Database/` directory, initializes the schema, and generates the necessary log files (e.g., `derby.log`).
+3.  **Cross-Platform:** The project includes a `.gitattributes` file to handle line-ending differences between Windows, macOS, and Linux automatically.
+
+Simply ensure you have the [Prerequisites](#prerequisites) installed, then follow the [Getting Started](#getting-started) steps.
+
+---
+
 ## Default Admin Credentials
 
 | Field | Value |

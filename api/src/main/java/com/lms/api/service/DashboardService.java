@@ -24,7 +24,8 @@ public class DashboardService {
                 loanService.countActiveLoans(),
                 loanService.countOverdueUnpaidLoans(),
                 holdService.countActiveHolds(),
-                userRepository.countBorrowers()
+                userRepository.countBorrowers(),
+                userRepository.countStaff()
         );
     }
 }

@@ -30,7 +30,7 @@ export default function BooksPage(props: Props) {
   return (
     <>
       <section className="card">
-        <form onSubmit={onSearchSubmit} className="search-form">
+        <form onSubmit={onSearchSubmit} className="search-bar">
           <select value={searchBy} onChange={(event) => onSearchByChange(event.target.value as 'title' | 'author' | 'subject')}>
             <option value="title">Title</option>
             <option value="author">Author</option>

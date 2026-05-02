@@ -172,6 +172,14 @@ public class UserRepository {
         return count == null ? 0 : count.intValue();
     }
 
+    public int countStaff() {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM app_user WHERE role != 'BORROWER'",
+                Integer.class
+        );
+        return count == null ? 0 : count.intValue();
+    }
+
     public static class UserRow {
         private final int id;
         private final String username;

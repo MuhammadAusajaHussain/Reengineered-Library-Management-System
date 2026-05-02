@@ -13,6 +13,10 @@ This log maps concrete project changes to refactoring categories from the provid
 | 2026-05-02 | Holds flow | Composing Methods + Simplifying Method Calls | Single hold state and limited transitions | Hold lifecycle (`ACTIVE`, `READY`, `FULFILLED`, `CANCELLED`) + dedicated endpoints | Minor enhancement |
 | 2026-05-02 | Catalog maintenance | Moving Features Between Objects | No web-level book mutation safety checks | `BookService` update/delete with invariant checks | Minor enhancement |
 | 2026-05-02 | Operational visibility | Organizing Data | Unstructured runtime logging | Request-id filter + structured logback pattern + exception logging | None |
+| 2026-05-02 | UI modernizing | Glassmorphism & Vanilla CSS | Standard browser-default styling | High-contrast Dark Mode with Backdrop Blur and Responsive Form Grids | Visual only |
+| 2026-05-02 | Data Integrity | Self-repairing inventory | Occasional leaked book availability | Startup reconciliation of total copies vs active loans | Bug fix |
+| 2026-05-02 | Catalog logic | Moving Features Between Objects | Multiple cards for same book | Automatic "Merge-on-Create" for duplicate ISBNs/Titles | UX/Bug fix |
+| 2026-05-03 | Unified User Mgmt | Moving Features Between Objects | Fragmented creation paths for borrowers | Merged createUser logic handling borrower profiles with conditional UI fields | Better UX |
 
 ## Strategy Context Used
 - **Partial**: core intent preserved, boundaries modernized.

@@ -51,7 +51,7 @@ function App() {
     void loadDashboardStats()
     void loadUsers()
     void loadHolds()
-  }, [token])
+  }, [token, user?.role, borrowerId])
 
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -228,7 +228,15 @@ function App() {
     }
   }
 
-  async function createUser(payload: { username: string; password: string; fullName: string; role: Role; active: boolean }) {
+  async function createUser(payload: { 
+    username: string; 
+    password: string; 
+    fullName: string; 
+    role: Role; 
+    active: boolean;
+    address?: string;
+    phoneNo?: string;
+  }) {
     setLoading(true)
     setError(null)
     setMessage(null)
@@ -242,6 +250,8 @@ function App() {
           fullName: payload.fullName,
           role: payload.role,
           active: payload.active,
+          address: payload.address,
+          phoneNo: payload.phoneNo,
         }),
       })
       if (!response.ok) {
@@ -250,6 +260,8 @@ function App() {
       }
       setMessage('User created successfully')
       await loadUsers()
+      await loadBorrowers()
+      await loadDashboardStats()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -273,6 +285,7 @@ function App() {
       }
       setMessage('User updated successfully')
       await loadUsers()
+      await loadBorrowers()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -295,6 +308,8 @@ function App() {
       }
       setMessage('User deleted successfully')
       await loadUsers()
+      await loadBorrowers()
+      await loadDashboardStats()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -553,6 +568,8 @@ function App() {
       const created: Borrower = await response.json()
       setMessage(`Borrower created with ID ${created.id}`)
       await loadBorrowers()
+      await loadUsers()
+      await loadDashboardStats()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -606,11 +623,17 @@ function App() {
       }
       setMessage('Borrower updated successfully')
       await loadBorrowers()
+      await loadUsers()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setLoading(false)
     }
+  }
+
+  async function deleteBorrower(id: number) {
+    if (!window.confirm('Are you sure you want to delete this borrower? This will also delete their user account and all related data.')) return
+    await deleteUser(id)
   }
 
   if (!token || !user) {
@@ -650,14 +673,14 @@ function App() {
         </header>
 
         <Routes>
-          {canSeeDashboard && <Route path="/dashboard" element={<DashboardPage stats={dashboardStats} />} />}
+          {canSeeDashboard && <Route path="/dashboard" element={<DashboardPage stats={dashboardStats} isAdmin={isAdmin} />} />}
           <Route path="/books" element={<BooksPage books={books} canManageBooks={canManageBooks} loading={loading} searchBy={searchBy} query={query} onSearchByChange={setSearchBy} onQueryChange={setQuery} onSearchSubmit={onSearchSubmit} onReset={() => void loadAllBooks()} />} />
           {canManageBooks && <Route path="/books/new" element={<BookFormPage books={books} onCreate={createBook} onUpdate={updateBook} onDelete={deleteBook} />} />}
           {canManageBooks && <Route path="/books/:id/edit" element={<BookFormPage books={books} onCreate={createBook} onUpdate={updateBook} onDelete={deleteBook} />} />}
           {canManageLoans && <Route path="/circulation" element={<CirculationPage borrower={borrower} borrowerId={borrowerId} bookId={bookId} canManageLoans={canManageLoans} setBorrowerId={setBorrowerId} setBookId={setBookId} loadBorrower={loadBorrower} loadHolds={loadHolds} processLoan={processLoan} renewLoan={renewLoan} placeHold={placeHold} borrowers={borrowers} books={books} />} />}
           <Route path="/loans" element={<LoansPage canManageLoans={canManageLoans} activeLoans={activeLoans} loanHistory={loanHistory} fineLoanId={fineLoanId} setFineLoanId={setFineLoanId} payFine={payFine} />} />
           <Route path="/holds" element={<HoldsPage holds={holds} canManageLoans={canManageLoans} isAdmin={isAdmin} checkoutReadyHold={checkoutReadyHold} onDeleteHold={deleteHold} />} />
-          {canManageLoans && <Route path="/borrowers" element={<BorrowersPage borrowers={borrowers} />} />}
+          {canManageLoans && <Route path="/borrowers" element={<BorrowersPage borrowers={borrowers} isAdmin={isAdmin} onDelete={deleteBorrower} />} />}
           {canManageLoans && <Route path="/borrowers/new" element={<BorrowerFormPage borrowers={borrowers} onCreate={createBorrower} onUpdate={updateBorrower} />} />}
           {canManageLoans && <Route path="/borrowers/:id/edit" element={<BorrowerFormPage borrowers={borrowers} onCreate={createBorrower} onUpdate={updateBorrower} />} />}
           {isAdmin && <Route path="/users" element={<UsersPage users={users} />} />}

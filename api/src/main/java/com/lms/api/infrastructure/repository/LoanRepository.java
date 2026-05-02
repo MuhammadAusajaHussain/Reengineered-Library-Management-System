@@ -134,6 +134,15 @@ public class LoanRepository {
         return count == null ? 0 : count.intValue();
     }
 
+    public int countActiveLoansForBook(int bookId) {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM loan WHERE book_id = ? AND return_date IS NULL",
+                Integer.class,
+                bookId
+        );
+        return count == null ? 0 : count.intValue();
+    }
+
     public int countOverdueUnpaidLoans(LocalDateTime now) {
         Integer count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM loan WHERE return_date IS NULL AND due_date < ? AND fine_paid = ?",

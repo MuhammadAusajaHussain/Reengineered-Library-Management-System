@@ -7,6 +7,7 @@ import com.lms.api.dto.UserDto;
 import com.lms.api.exception.BadRequestException;
 import com.lms.api.exception.NotFoundException;
 import com.lms.api.infrastructure.repository.UserRepository;
+import com.lms.api.infrastructure.repository.LoanRepository;
 import com.lms.api.util.PasswordHasher;
 import org.springframework.stereotype.Service;
 
@@ -16,9 +17,13 @@ import java.util.stream.Collectors;
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final LoanRepository loanRepository;
+    private final BookService bookService;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, LoanRepository loanRepository, BookService bookService) {
         this.userRepository = userRepository;
+        this.loanRepository = loanRepository;
+        this.bookService = bookService;
     }
 
     public List<UserDto> listUsers() {
@@ -35,13 +40,25 @@ public class UserService {
         }
         Role role = Role.valueOf(request.getRole());
         boolean active = request.getActive() == null || request.getActive().booleanValue();
-        int id = userRepository.createUser(
-                username,
-                PasswordHasher.sha256(request.getPassword()),
-                request.getFullName().trim(),
-                role,
-                active
-        );
+        
+        int id;
+        if (role == Role.BORROWER) {
+            id = userRepository.createBorrower(
+                    username,
+                    PasswordHasher.sha256(request.getPassword()),
+                    request.getFullName().trim(),
+                    request.getAddress() != null ? request.getAddress().trim() : "",
+                    request.getPhoneNo() != null ? request.getPhoneNo().trim() : ""
+            );
+        } else {
+            id = userRepository.createUser(
+                    username,
+                    PasswordHasher.sha256(request.getPassword()),
+                    request.getFullName().trim(),
+                    role,
+                    active
+            );
+        }
         UserRepository.UserRow created = userRepository.findById(id);
         if (created == null) {
             throw new NotFoundException("User creation failed");
@@ -71,6 +88,14 @@ public class UserService {
         if (existing == null) {
             throw new NotFoundException("User not found: " + userId);
         }
+
+        // Fix: If the user is a borrower with active loans, we must "return" the books
+        // to the inventory before deleting the loan records.
+        List<LoanRepository.LoanRow> activeLoans = loanRepository.listActiveLoansForBorrower(userId);
+        for (LoanRepository.LoanRow loan : activeLoans) {
+            bookService.incrementAvailability(loan.getBookId());
+        }
+
         userRepository.deleteUser(userId);
     }
 }

@@ -4,7 +4,7 @@ import type { ManagedUser, Role } from '../types'
 
 type Props = {
   users: ManagedUser[]
-  onCreate: (payload: { username: string; password: string; fullName: string; role: Role; active: boolean }) => Promise<void>
+  onCreate: (payload: { username: string; password: string; fullName: string; role: Role; active: boolean; address?: string; phoneNo?: string }) => Promise<void>
   onUpdate: (id: number, payload: { fullName?: string; role: Role; active: boolean; password?: string }) => Promise<void>
   onDelete: (id: number) => Promise<void>
 }
@@ -20,6 +20,8 @@ export default function UserFormPage({ users, onCreate, onUpdate, onDelete }: Pr
   const [fullName, setFullName] = useState('')
   const [role, setRole] = useState<Role>('CLERK')
   const [active, setActive] = useState(true)
+  const [address, setAddress] = useState('')
+  const [phoneNo, setPhoneNo] = useState('')
 
   useEffect(() => {
     if (!editing || !current) return
@@ -34,7 +36,15 @@ export default function UserFormPage({ users, onCreate, onUpdate, onDelete }: Pr
     if (editing && id) {
       await onUpdate(Number(id), { fullName, role, active, password: password || undefined })
     } else {
-      await onCreate({ username, password, fullName, role, active })
+      await onCreate({ 
+        username, 
+        password, 
+        fullName, 
+        role, 
+        active,
+        address: role === 'BORROWER' ? address : undefined,
+        phoneNo: role === 'BORROWER' ? phoneNo : undefined
+      })
     }
     navigate('/users')
   }
@@ -59,6 +69,12 @@ export default function UserFormPage({ users, onCreate, onUpdate, onDelete }: Pr
           <option value="CLERK">CLERK</option>
           <option value="BORROWER">BORROWER</option>
         </select>
+        {!editing && role === 'BORROWER' && (
+          <>
+            <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Address" required />
+            <input value={phoneNo} onChange={(e) => setPhoneNo(e.target.value)} placeholder="Phone Number" required />
+          </>
+        )}
         <label className="checkbox">
           <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
           Active
