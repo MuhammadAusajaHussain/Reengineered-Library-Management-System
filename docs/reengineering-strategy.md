@@ -1,23 +1,39 @@
-# Reengineering Strategy (UI Modernization Track)
+# Reengineering Strategy (Modernization Track)
 
 ## Scope Decision
-- Keep existing Java + Derby stack and preserve existing business logic.
-- Modernize presentation layer by introducing REST API + React frontend.
-- Clean code structure incrementally without behavior changes.
+- Preserve legacy domain intent and core LMS workflows.
+- Move from console-driven interaction to layered web architecture.
+- Keep Java + Derby stack to reduce migration risk and ensure continuity.
 
 ## Strategy Mapping (from SRE Mid 2)
-- **Partial Approach**: only reengineer UI/access layer now, core rules stay in place.
-- **Incremental Approach**: deliver functionality module-by-module (search, borrower profile, circulation, holds, fines).
-- **Iterative Approach**: short cycles of refactor -> expose API -> build UI -> validate against legacy behavior.
+- **Partial Approach**: preserve core business rules while replacing interaction/data-access boundaries.
+- **Incremental Approach**: deliver modules in slices (auth, books, borrowers, circulation, holds, fines, admin).
+- **Iterative Approach**: implement-refactor-validate cycles with running software after each iteration.
+- **Evolutionary Approach (applied selectively)**: group and modernize features by capability (circulation, user/role management, catalog).
 
-## Why This Strategy
-- Lower risk than Big Bang.
-- Faster visible progress for demos and report milestones.
-- Enables side-by-side verification with existing console flow.
+## Why this hybrid strategy
+- Avoids Big Bang risk and allows continuous demos.
+- Supports side-by-side behavior verification.
+- Reduces production/debug complexity by limiting concurrent unknowns.
 
-## Phase Breakdown
-1. Setup API wrapper around legacy domain.
-2. Build React UI for read flows first.
-3. Add write flows (checkout/check-in/renew/holds).
-4. Refactor legacy package structure and isolate data access.
-5. Add regression tests for high-risk flows.
+## Current Layered Architecture
+- **API**: controllers, validation, exception mapping.
+- **Application/Service**: use-case orchestration, role checks, workflow rules.
+- **Infrastructure**: repositories over Derby JDBC, session store.
+- **Client**: React UI consuming `/api/*`.
+
+## Completed Capability Slices
+1. Auth + sessions + role checks.
+2. Catalog search/list + create.
+3. Borrower profile + registration.
+4. Circulation: checkout/check-in/renew.
+5. Fines: calculation + pay fine.
+6. Holds: place/cancel + READY reservation + READY checkout.
+7. Admin: user CRUD.
+8. Observability: request-id logging + access logs.
+
+## Next Strategy-Aligned Steps
+1. Add regression tests for circulation and hold workflows.
+2. Harden transactional boundaries around multi-step DB updates.
+3. Add migration/versioning tool for schema evolution.
+4. Produce before/after evidence tables for report (class responsibilities, dependency direction, cyclomatic complexity).
