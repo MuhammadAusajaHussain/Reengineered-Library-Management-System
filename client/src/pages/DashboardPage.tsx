@@ -10,14 +10,29 @@ export default function DashboardPage({ stats }: Props) {
       <h2>Dashboard</h2>
       {stats ? (
         <div className="stats-grid">
-          <p>Total Books: <strong>{stats.totalBooks}</strong></p>
-          <p>Active Loans: <strong>{stats.activeLoans}</strong></p>
-          <p>Overdue Unpaid Loans: <strong>{stats.overdueUnpaidLoans}</strong></p>
-          <p>Active Holds: <strong>{stats.activeHolds}</strong></p>
-          <p>Total Borrowers: <strong>{stats.totalBorrowers}</strong></p>
+          <div className="stats-card">
+            <span className="value">{stats.totalBooks}</span>
+            <span className="label">Total Books</span>
+          </div>
+          <div className="stats-card">
+            <span className="value">{stats.activeLoans}</span>
+            <span className="label">Active Loans</span>
+          </div>
+          <div className="stats-card">
+            <span className="value">{stats.overdueUnpaidLoans}</span>
+            <span className="label">Overdue Unpaid</span>
+          </div>
+          <div className="stats-card">
+            <span className="value">{stats.activeHolds}</span>
+            <span className="label">Active Holds</span>
+          </div>
+          <div className="stats-card">
+            <span className="value">{stats.totalBorrowers}</span>
+            <span className="label">Total Borrowers</span>
+          </div>
         </div>
       ) : (
-        <p>No dashboard stats yet.</p>
+        <p>Loading dashboard stats...</p>
       )}
     </section>
   )

@@ -50,6 +50,7 @@ function App() {
     void loadLoanHistory()
     void loadDashboardStats()
     void loadUsers()
+    void loadHolds()
   }, [token])
 
   async function login(event: FormEvent<HTMLFormElement>) {
@@ -82,6 +83,9 @@ function App() {
         fullName: data.fullName,
         role: data.role,
       })
+      if (data.role === 'BORROWER') {
+        setBorrowerId(data.userId.toString())
+      }
       setMessage(`Logged in as ${data.fullName} (${data.role})`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -382,10 +386,39 @@ function App() {
     }
   }
 
-  async function loadHolds() {
-    if (!borrowerId.trim()) return
+  async function deleteHold(holdId: number) {
+    setLoading(true)
+    setError(null)
+    setMessage(null)
     try {
-      const response = await fetch(`/api/holds?borrowerId=${Number(borrowerId)}`, {
+      const response = await fetch(`/api/holds/${holdId}/admin`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? 'Failed to delete hold')
+      }
+      setMessage('Hold request deleted successfully')
+      await loadHolds()
+      await loadDashboardStats()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function loadHolds() {
+    if (!token) return
+    try {
+      const isStaff = user?.role === 'ADMIN' || user?.role === 'LIBRARIAN' || user?.role === 'CLERK'
+      // For staff, we use the /all endpoint. For borrowers, we use the borrowerId query param.
+      const url = isStaff ? '/api/holds/all' : `/api/holds?borrowerId=${Number(borrowerId)}`
+      
+      if (!isStaff && !borrowerId) return
+
+      const response = await fetch(url, {
         headers: authHeaders(),
       })
       if (!response.ok) return
@@ -592,17 +625,19 @@ function App() {
     <main className="layout">
       <aside className="sidebar">
         <h2>LMS</h2>
-        <p>{user.fullName}</p>
-        <p className="role">{user.role}</p>
+        <div className="user-info">
+          <p>{user.fullName}</p>
+          <p className="role">{user.role}</p>
+        </div>
         <nav className="sidebar-nav">
           {canSeeDashboard && <NavLink to="/dashboard" className={routeClassName}>Dashboard</NavLink>}
           <NavLink to="/books" className={routeClassName}>Books</NavLink>
-          <NavLink to="/circulation" className={routeClassName}>Circulation</NavLink>
+          {canManageLoans && <NavLink to="/circulation" className={routeClassName}>Circulation</NavLink>}
           <NavLink to="/loans" className={routeClassName}>Loans</NavLink>
           <NavLink to="/holds" className={routeClassName}>Holds</NavLink>
           {canManageLoans && <NavLink to="/borrowers" className={routeClassName}>Borrowers</NavLink>}
           {isAdmin && <NavLink to="/users" className={routeClassName}>User Management</NavLink>}
-          <button type="button" onClick={() => { setToken(''); setUser(null); setPassword('') }}>Logout</button>
+          <button type="button" onClick={() => { setToken(''); setUser(null); setPassword(''); setError(null); setMessage(null) }}>Logout</button>
         </nav>
       </aside>
 
@@ -619,9 +654,9 @@ function App() {
           <Route path="/books" element={<BooksPage books={books} canManageBooks={canManageBooks} loading={loading} searchBy={searchBy} query={query} onSearchByChange={setSearchBy} onQueryChange={setQuery} onSearchSubmit={onSearchSubmit} onReset={() => void loadAllBooks()} />} />
           {canManageBooks && <Route path="/books/new" element={<BookFormPage books={books} onCreate={createBook} onUpdate={updateBook} onDelete={deleteBook} />} />}
           {canManageBooks && <Route path="/books/:id/edit" element={<BookFormPage books={books} onCreate={createBook} onUpdate={updateBook} onDelete={deleteBook} />} />}
-          <Route path="/circulation" element={<CirculationPage borrower={borrower} borrowerId={borrowerId} bookId={bookId} canManageLoans={canManageLoans} setBorrowerId={setBorrowerId} setBookId={setBookId} loadBorrower={loadBorrower} loadHolds={loadHolds} processLoan={processLoan} renewLoan={renewLoan} placeHold={placeHold} />} />
+          {canManageLoans && <Route path="/circulation" element={<CirculationPage borrower={borrower} borrowerId={borrowerId} bookId={bookId} canManageLoans={canManageLoans} setBorrowerId={setBorrowerId} setBookId={setBookId} loadBorrower={loadBorrower} loadHolds={loadHolds} processLoan={processLoan} renewLoan={renewLoan} placeHold={placeHold} borrowers={borrowers} books={books} />} />}
           <Route path="/loans" element={<LoansPage canManageLoans={canManageLoans} activeLoans={activeLoans} loanHistory={loanHistory} fineLoanId={fineLoanId} setFineLoanId={setFineLoanId} payFine={payFine} />} />
-          <Route path="/holds" element={<HoldsPage holds={holds} canManageLoans={canManageLoans} checkoutReadyHold={checkoutReadyHold} />} />
+          <Route path="/holds" element={<HoldsPage holds={holds} canManageLoans={canManageLoans} isAdmin={isAdmin} checkoutReadyHold={checkoutReadyHold} onDeleteHold={deleteHold} />} />
           {canManageLoans && <Route path="/borrowers" element={<BorrowersPage borrowers={borrowers} />} />}
           {canManageLoans && <Route path="/borrowers/new" element={<BorrowerFormPage borrowers={borrowers} onCreate={createBorrower} onUpdate={updateBorrower} />} />}
           {canManageLoans && <Route path="/borrowers/:id/edit" element={<BorrowerFormPage borrowers={borrowers} onCreate={createBorrower} onUpdate={updateBorrower} />} />}

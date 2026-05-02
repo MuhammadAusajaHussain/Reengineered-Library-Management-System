@@ -26,6 +26,7 @@ public class HoldService {
     public HoldRequestDto placeHold(int borrowerId, int bookId) {
         ensureBorrowerExists(borrowerId);
         BookRepository.BookRow book = bookService.getBookById(bookId);
+        UserRepository.UserRow user = userRepository.findById(borrowerId);
         if (book.getAvailableCopies() > 0) {
             throw new BadRequestException("Book is available; checkout instead of placing hold");
         }
@@ -33,17 +34,20 @@ public class HoldService {
             throw new BadRequestException("Active hold already exists for this borrower and book");
         }
         int holdId = holdRepository.createHold(bookId, borrowerId);
-        return new HoldRequestDto(holdId, bookId, book.getTitle(), java.time.LocalDateTime.now().toString(), "ACTIVE");
+        return new HoldRequestDto(holdId, bookId, book.getTitle(), user != null ? user.getFullName() : "Unknown", java.time.LocalDateTime.now().toString(), "ACTIVE");
     }
 
     public List<HoldRequestDto> getBorrowerHolds(int borrowerId) {
         ensureBorrowerExists(borrowerId);
+        UserRepository.UserRow user = userRepository.findById(borrowerId);
+        String name = user != null ? user.getFullName() : "Unknown";
         return holdRepository.listHoldsForBorrower(borrowerId)
                 .stream()
                 .map(row -> new HoldRequestDto(
                         row.getId(),
                         row.getBookId(),
                         bookService.getBookById(row.getBookId()).getTitle(),
+                        name,
                         row.getRequestDate().toString(),
                         row.getStatus()
                 ))
@@ -52,6 +56,27 @@ public class HoldService {
 
     public void cancelHold(int borrowerId, int holdId) {
         holdRepository.cancelHold(holdId, borrowerId);
+    }
+
+    public void deleteHold(int holdId) {
+        holdRepository.deleteHold(holdId);
+    }
+
+    public List<HoldRequestDto> getAllHolds() {
+        return holdRepository.listAllHolds()
+                .stream()
+                .map(row -> {
+                    UserRepository.UserRow borrower = userRepository.findById(row.getBorrowerId());
+                    return new HoldRequestDto(
+                            row.getId(),
+                            row.getBookId(),
+                            bookService.getBookById(row.getBookId()).getTitle(),
+                            borrower != null ? borrower.getFullName() : "Unknown",
+                            row.getRequestDate().toString(),
+                            row.getStatus()
+                    );
+                })
+                .collect(Collectors.toList());
     }
 
     public HoldRepository.HoldRow getHold(int holdId) {

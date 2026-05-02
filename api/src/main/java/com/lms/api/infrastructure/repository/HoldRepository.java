@@ -129,6 +129,23 @@ public class HoldRepository {
         );
     }
 
+    public void deleteHold(int holdId) {
+        jdbcTemplate.update("DELETE FROM hold_request WHERE id = ?", holdId);
+    }
+
+    public List<HoldRow> listAllHolds() {
+        return jdbcTemplate.query(
+                "SELECT id, book_id, borrower_user_id, request_date, status FROM hold_request ORDER BY request_date DESC",
+                (rs, idx) -> new HoldRow(
+                        rs.getInt("id"),
+                        rs.getInt("book_id"),
+                        rs.getInt("borrower_user_id"),
+                        rs.getTimestamp("request_date").toLocalDateTime(),
+                        rs.getString("status")
+                )
+        );
+    }
+
     public static class HoldRow {
         private final int id;
         private final int bookId;

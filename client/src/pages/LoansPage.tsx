@@ -15,15 +15,18 @@ export default function LoansPage({ canManageLoans, activeLoans, loanHistory, fi
       <section className="card">
         <h2>Active Loans</h2>
         <div className="actions-grid">
-          <input value={fineLoanId} onChange={(e) => setFineLoanId(e.target.value)} placeholder="Loan ID for fine payment" />
+          <select value={fineLoanId} onChange={(e) => setFineLoanId(e.target.value)}>
+            <option value="">Select Loan to Pay Fine</option>
+            {activeLoans.filter(l => l.pendingFine > 0).map(l => (
+              <option key={l.loanId} value={l.loanId}>Loan #{l.loanId} - {l.bookTitle} (Rs {l.pendingFine})</option>
+            ))}
+          </select>
           {canManageLoans && <button type="button" onClick={() => void payFine()}>Mark Fine Paid</button>}
         </div>
         <div className="cards-grid">
           {activeLoans.map((loan) => (
             <article key={loan.loanId} className="entity-card">
-              <h3>Loan #{loan.loanId}</h3>
-              <p><strong>Borrower:</strong> #{loan.borrowerId}</p>
-              <p><strong>Book:</strong> {loan.bookTitle}</p>
+              <h3>{loan.bookTitle}</h3>
               <p><strong>Due:</strong> {loan.dueDate.slice(0, 10)}</p>
               <p><strong>Pending Fine:</strong> Rs {loan.pendingFine}</p>
               <p><strong>Fine Paid:</strong> {loan.finePaid ? 'Yes' : 'No'}</p>
@@ -37,9 +40,7 @@ export default function LoansPage({ canManageLoans, activeLoans, loanHistory, fi
         <div className="cards-grid">
           {loanHistory.map((loan) => (
             <article key={loan.loanId} className="entity-card">
-              <h3>Loan #{loan.loanId}</h3>
-              <p><strong>Borrower:</strong> #{loan.borrowerId}</p>
-              <p><strong>Book:</strong> {loan.bookTitle}</p>
+              <h3>{loan.bookTitle}</h3>
               <p><strong>Issued:</strong> {loan.issueDate.slice(0, 10)}</p>
               <p><strong>Due:</strong> {loan.dueDate.slice(0, 10)}</p>
               <p><strong>Returned:</strong> {loan.returnDate ? loan.returnDate.slice(0, 10) : '-'}</p>

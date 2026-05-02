@@ -71,6 +71,25 @@ public class HoldsController {
         holdService.cancelHold(borrowerId, holdId);
     }
 
+    @DeleteMapping("/{holdId}/admin")
+    public void adminDeleteHold(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @PathVariable int holdId
+    ) {
+        SessionUser user = authService.getSessionUser(authorization);
+        authService.requireAnyRole(user, Role.ADMIN);
+        holdService.deleteHold(holdId);
+    }
+
+    @GetMapping("/all")
+    public List<HoldRequestDto> listAllHolds(
+            @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        SessionUser user = authService.getSessionUser(authorization);
+        authService.requireAnyRole(user, Role.ADMIN, Role.LIBRARIAN, Role.CLERK);
+        return holdService.getAllHolds();
+    }
+
     // Staff can fulfill a READY hold by checking out the reserved copy.
     @PostMapping("/{holdId}/checkout")
     public com.lms.api.dto.LoanResultDto checkoutReadyHold(

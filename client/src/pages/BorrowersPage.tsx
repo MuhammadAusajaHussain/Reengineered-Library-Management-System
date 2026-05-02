@@ -18,7 +18,6 @@ export default function BorrowersPage({ borrowers }: Props) {
         {borrowers.map((item) => (
           <article key={item.id} className="entity-card">
             <h3>{item.name}</h3>
-            <p><strong>Borrower ID:</strong> {item.id}</p>
             <p><strong>Phone:</strong> {item.phoneNumber}</p>
             <p><strong>Address:</strong> {item.address}</p>
             <p><strong>Borrowed:</strong> {item.borrowedBooksCount}</p>

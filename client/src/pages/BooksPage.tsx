@@ -52,7 +52,6 @@ export default function BooksPage(props: Props) {
           {books.map((book) => (
             <article key={book.id} className="entity-card">
               <h3>{book.title}</h3>
-              <p><strong>Book ID:</strong> {book.id}</p>
               <p><strong>ISBN:</strong> {book.isbn || '-'}</p>
               <p><strong>Author:</strong> {book.author}</p>
               <p><strong>Subject:</strong> {book.subject}</p>

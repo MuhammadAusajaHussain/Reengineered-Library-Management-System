@@ -1,4 +1,4 @@
-import type { Borrower } from '../types'
+import type { Book, Borrower } from '../types'
 
 type Props = {
   borrower: Borrower | null
@@ -12,6 +12,8 @@ type Props = {
   processLoan: (action: 'checkout' | 'checkin') => Promise<void>
   renewLoan: () => Promise<void>
   placeHold: () => Promise<void>
+  borrowers: Borrower[]
+  books: Book[]
 }
 
 export default function CirculationPage(props: Props) {
@@ -27,14 +29,26 @@ export default function CirculationPage(props: Props) {
     processLoan,
     renewLoan,
     placeHold,
+    borrowers,
+    books,
   } = props
 
   return (
     <section className="card">
       <h2>Borrower & Circulation</h2>
-      <div className="actions-grid">
-        <input value={borrowerId} onChange={(event) => setBorrowerId(event.target.value)} placeholder="Borrower ID" />
-        <input value={bookId} onChange={(event) => setBookId(event.target.value)} placeholder="Book ID" />
+      <div className="actions-grid two-columns">
+        <select value={borrowerId} onChange={(event) => setBorrowerId(event.target.value)}>
+          <option value="">Select Borrower</option>
+          {borrowers.map(b => (
+            <option key={b.id} value={b.id}>{b.name}</option>
+          ))}
+        </select>
+        <select value={bookId} onChange={(event) => setBookId(event.target.value)}>
+          <option value="">Select Book</option>
+          {books.map(b => (
+            <option key={b.id} value={b.id}>{b.title} {b.author ? `(${b.author})` : ''}</option>
+          ))}
+        </select>
         <button type="button" onClick={() => void loadBorrower()}>Load Borrower</button>
         <button type="button" onClick={() => void loadHolds()}>Load Holds</button>
         {canManageLoans && <button type="button" onClick={() => void processLoan('checkout')}>Checkout</button>}
@@ -45,7 +59,6 @@ export default function CirculationPage(props: Props) {
       {borrower && (
         <div className="borrower-box">
           <strong>{borrower.name}</strong>
-          <p>ID: {borrower.id}</p>
           <p>Address: {borrower.address}</p>
           <p>Phone: {borrower.phoneNumber}</p>
           <p>Borrowed Books: {borrower.borrowedBooksCount}</p>

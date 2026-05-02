@@ -49,6 +49,7 @@ export type HoldItem = {
   id: number
   bookId: number
   bookTitle: string
+  borrowerName: string
   requestDate: string
   status: string
 }
