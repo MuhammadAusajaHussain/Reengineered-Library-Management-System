@@ -85,6 +85,25 @@ public class BookRepository {
         return key == null ? 0 : key.intValue();
     }
 
+    public void update(int id, String isbn, String title, String author, String subject, int totalCopies, int availableCopies) {
+        jdbcTemplate.update(
+                "UPDATE book SET isbn = ?, title = ?, author = ?, subject = ?, total_copies = ?, available_copies = ? WHERE id = ?",
+                isbn,
+                title,
+                author,
+                subject,
+                totalCopies,
+                availableCopies,
+                id
+        );
+    }
+
+    public void delete(int id) {
+        jdbcTemplate.update("DELETE FROM hold_request WHERE book_id = ?", id);
+        jdbcTemplate.update("DELETE FROM loan WHERE book_id = ?", id);
+        jdbcTemplate.update("DELETE FROM book WHERE id = ?", id);
+    }
+
     public void changeAvailability(int bookId, int delta) {
         jdbcTemplate.update(
                 "UPDATE book SET available_copies = available_copies + ? WHERE id = ?",

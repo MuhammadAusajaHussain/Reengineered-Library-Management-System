@@ -65,6 +65,14 @@ body {
   background: #4b5563;
 }
 
+button {
+  cursor: pointer;
+}
+
+button[type='button'] {
+  border: none;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -119,6 +127,17 @@ td {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
+}
+
+.checkbox {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  height: 40px;
+  padding: 0 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
 }
 
 @media (max-width: 768px) {

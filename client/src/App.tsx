@@ -54,6 +54,17 @@ type DashboardStats = {
   totalBorrowers: number
 }
 
+type LoanHistory = {
+  loanId: number
+  borrowerId: number
+  bookId: number
+  bookTitle: string
+  issueDate: string
+  dueDate: string
+  returnDate: string | null
+  finePaid: boolean
+}
+
 function App() {
   const [token, setToken] = useState('')
   const [user, setUser] = useState<User | null>(null)
@@ -81,19 +92,42 @@ function App() {
   const [holds, setHolds] = useState<HoldItem[]>([])
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null)
   const [fineLoanId, setFineLoanId] = useState('')
+  const [loanHistory, setLoanHistory] = useState<LoanHistory[]>([])
+  const [editBookId, setEditBookId] = useState('')
+  const [editBookIsbn, setEditBookIsbn] = useState('')
+  const [editBookTitle, setEditBookTitle] = useState('')
+  const [editBookAuthor, setEditBookAuthor] = useState('')
+  const [editBookSubject, setEditBookSubject] = useState('')
+  const [editBookTotalCopies, setEditBookTotalCopies] = useState('1')
+  const [deleteBookId, setDeleteBookId] = useState('')
+  const [users, setUsers] = useState<Array<{ id: number; username: string; fullName: string; role: string; active: boolean }>>([])
+  const [newUserUsername, setNewUserUsername] = useState('')
+  const [newUserPassword, setNewUserPassword] = useState('')
+  const [newUserFullName, setNewUserFullName] = useState('')
+  const [newUserRole, setNewUserRole] = useState<'ADMIN' | 'LIBRARIAN' | 'CLERK' | 'BORROWER'>('CLERK')
+  const [newUserActive, setNewUserActive] = useState(true)
+  const [editUserId, setEditUserId] = useState('')
+  const [editUserFullName, setEditUserFullName] = useState('')
+  const [editUserRole, setEditUserRole] = useState<'ADMIN' | 'LIBRARIAN' | 'CLERK' | 'BORROWER'>('CLERK')
+  const [editUserActive, setEditUserActive] = useState(true)
+  const [editUserPassword, setEditUserPassword] = useState('')
+  const [deleteUserId, setDeleteUserId] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
   const canManageBooks = useMemo(() => user?.role === 'ADMIN' || user?.role === 'LIBRARIAN', [user])
   const canManageLoans = useMemo(() => user?.role === 'ADMIN' || user?.role === 'LIBRARIAN' || user?.role === 'CLERK', [user])
+  const isAdmin = useMemo(() => user?.role === 'ADMIN', [user])
 
   useEffect(() => {
     if (!token) return
     void loadAllBooks()
     void loadBorrowers()
     void loadActiveLoans()
+    void loadLoanHistory()
     void loadDashboardStats()
+    void loadUsers()
   }, [token])
 
   async function login(event: FormEvent<HTMLFormElement>) {
@@ -237,6 +271,121 @@ function App() {
     }
   }
 
+  async function loadLoanHistory() {
+    if (!token) return
+    try {
+      const response = await fetch('/api/loans/history', { headers: authHeaders() })
+      if (!response.ok) return
+      const data: LoanHistory[] = await response.json()
+      setLoanHistory(data)
+    } catch {
+      // no-op
+    }
+  }
+
+  async function loadUsers() {
+    if (!token || !isAdmin) return
+    try {
+      const response = await fetch('/api/users', { headers: authHeaders() })
+      if (!response.ok) return
+      const data = (await response.json()) as Array<{ id: number; username: string; fullName: string; role: string; active: boolean }>
+      setUsers(data)
+    } catch {
+      // no-op
+    }
+  }
+
+  async function createUser(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          username: newUserUsername,
+          password: newUserPassword,
+          fullName: newUserFullName,
+          role: newUserRole,
+          active: newUserActive,
+        }),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? 'Failed to create user')
+      }
+      setMessage('User created successfully')
+      setNewUserUsername('')
+      setNewUserPassword('')
+      setNewUserFullName('')
+      setNewUserRole('CLERK')
+      setNewUserActive(true)
+      await loadUsers()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function updateUser() {
+    if (!editUserId.trim()) return
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch(`/api/users/${Number(editUserId)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          fullName: editUserFullName || undefined,
+          role: editUserRole,
+          active: editUserActive,
+          password: editUserPassword || undefined,
+        }),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? 'Failed to update user')
+      }
+      setMessage('User updated successfully')
+      setEditUserId('')
+      setEditUserFullName('')
+      setEditUserPassword('')
+      await loadUsers()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function deleteUser() {
+    if (!deleteUserId.trim()) return
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch(`/api/users/${Number(deleteUserId)}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? 'Failed to delete user')
+      }
+      setMessage('User deleted successfully')
+      setDeleteUserId('')
+      await loadUsers()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function processLoan(action: 'checkout' | 'checkin') {
     setLoading(true)
     setError(null)
@@ -335,6 +484,33 @@ function App() {
     }
   }
 
+  async function checkoutReadyHold(holdId: number) {
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch(`/api/holds/${holdId}/checkout`, {
+        method: 'POST',
+        headers: authHeaders(),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? 'Failed to checkout READY hold')
+      }
+      const result = (await response.json()) as { message: string; fineAmount: number }
+      setMessage(result.message)
+      await loadAllBooks()
+      await loadHolds()
+      await loadActiveLoans()
+      await loadLoanHistory()
+      await loadDashboardStats()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function payFine() {
     if (!fineLoanId.trim()) return
     setLoading(true)
@@ -353,6 +529,69 @@ function App() {
       const result = (await response.json()) as { message: string; fineAmount: number }
       setMessage(`${result.message}${result.fineAmount ? ` | Paid: Rs ${result.fineAmount}` : ''}`)
       await loadActiveLoans()
+      await loadLoanHistory()
+      await loadDashboardStats()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function updateBook() {
+    if (!editBookId.trim()) return
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch(`/api/books/${Number(editBookId)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          isbn: editBookIsbn || null,
+          title: editBookTitle,
+          author: editBookAuthor,
+          subject: editBookSubject,
+          totalCopies: Number(editBookTotalCopies),
+        }),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? 'Failed to update book')
+      }
+      setMessage('Book updated successfully')
+      setEditBookId('')
+      setEditBookIsbn('')
+      setEditBookTitle('')
+      setEditBookAuthor('')
+      setEditBookSubject('')
+      setEditBookTotalCopies('1')
+      await loadAllBooks()
+      await loadDashboardStats()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function deleteBook() {
+    if (!deleteBookId.trim()) return
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch(`/api/books/${Number(deleteBookId)}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? 'Failed to delete book')
+      }
+      setMessage('Book deleted successfully')
+      setDeleteBookId('')
+      await loadAllBooks()
       await loadDashboardStats()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -482,6 +721,64 @@ function App() {
         </section>
       )}
 
+      {isAdmin && (
+        <section className="card">
+          <h2>Admin: User Management</h2>
+
+          <h3>Create user</h3>
+          <form onSubmit={createUser} className="actions-grid">
+            <input value={newUserUsername} onChange={(e) => setNewUserUsername(e.target.value)} placeholder="Username" />
+            <input value={newUserPassword} type="password" onChange={(e) => setNewUserPassword(e.target.value)} placeholder="Password" />
+            <input value={newUserFullName} onChange={(e) => setNewUserFullName(e.target.value)} placeholder="Full name" />
+            <select value={newUserRole} onChange={(e) => setNewUserRole(e.target.value as any)}>
+              <option value="ADMIN">ADMIN</option>
+              <option value="LIBRARIAN">LIBRARIAN</option>
+              <option value="CLERK">CLERK</option>
+              <option value="BORROWER">BORROWER</option>
+            </select>
+            <label className="checkbox">
+              <input type="checkbox" checked={newUserActive} onChange={(e) => setNewUserActive(e.target.checked)} />
+              Active
+            </label>
+            <button type="submit">Create</button>
+          </form>
+
+          <h3>Update user</h3>
+          <div className="actions-grid">
+            <input value={editUserId} onChange={(e) => setEditUserId(e.target.value)} placeholder="User ID" />
+            <input value={editUserFullName} onChange={(e) => setEditUserFullName(e.target.value)} placeholder="New full name (optional)" />
+            <input value={editUserPassword} type="password" onChange={(e) => setEditUserPassword(e.target.value)} placeholder="New password (optional)" />
+            <select value={editUserRole} onChange={(e) => setEditUserRole(e.target.value as any)}>
+              <option value="ADMIN">ADMIN</option>
+              <option value="LIBRARIAN">LIBRARIAN</option>
+              <option value="CLERK">CLERK</option>
+              <option value="BORROWER">BORROWER</option>
+            </select>
+            <label className="checkbox">
+              <input type="checkbox" checked={editUserActive} onChange={(e) => setEditUserActive(e.target.checked)} />
+              Active
+            </label>
+            <button type="button" onClick={() => void updateUser()}>Update</button>
+          </div>
+
+          <h3>Delete user</h3>
+          <div className="actions-grid">
+            <input value={deleteUserId} onChange={(e) => setDeleteUserId(e.target.value)} placeholder="User ID" />
+            <button type="button" onClick={() => void deleteUser()}>Delete</button>
+          </div>
+
+          <h3>All users</h3>
+          <div className="borrower-list">
+            {users.map((u) => (
+              <p key={u.id}>
+                #{u.id} | {u.username} | {u.fullName} | {u.role} | {u.active ? 'Active' : 'Inactive'}
+              </p>
+            ))}
+            {users.length === 0 && <p>No users loaded.</p>}
+          </div>
+        </section>
+      )}
+
       <section className="card">
         <form onSubmit={onSearchSubmit} className="search-form">
           <select value={searchBy} onChange={(event) => setSearchBy(event.target.value as 'title' | 'author' | 'subject')}>
@@ -550,6 +847,25 @@ function App() {
         </section>
       )}
 
+      {canManageBooks && (
+        <section className="card">
+          <h2>Edit / Delete Book</h2>
+          <div className="actions-grid">
+            <input value={editBookId} onChange={(e) => setEditBookId(e.target.value)} placeholder="Book ID" />
+            <input value={editBookIsbn} onChange={(e) => setEditBookIsbn(e.target.value)} placeholder="ISBN (optional)" />
+            <input value={editBookTitle} onChange={(e) => setEditBookTitle(e.target.value)} placeholder="Title" />
+            <input value={editBookAuthor} onChange={(e) => setEditBookAuthor(e.target.value)} placeholder="Author" />
+            <input value={editBookSubject} onChange={(e) => setEditBookSubject(e.target.value)} placeholder="Subject" />
+            <input value={editBookTotalCopies} onChange={(e) => setEditBookTotalCopies(e.target.value)} placeholder="Total copies" />
+            <button type="button" onClick={() => void updateBook()}>Update Book</button>
+          </div>
+          <div className="actions-grid">
+            <input value={deleteBookId} onChange={(e) => setDeleteBookId(e.target.value)} placeholder="Book ID to delete" />
+            <button type="button" onClick={() => void deleteBook()}>Delete Book</button>
+          </div>
+        </section>
+      )}
+
       <section className="card">
         <h2>Borrower & Circulation</h2>
         <div className="actions-grid">
@@ -609,10 +925,28 @@ function App() {
             {holds.map((hold) => (
               <p key={hold.id}>
                 Hold #{hold.id} | Book #{hold.bookId} ({hold.bookTitle}) | Requested: {hold.requestDate.slice(0, 10)} | {hold.status}
+                {canManageLoans && hold.status === 'READY' && (
+                  <>
+                    {' '}| <button type="button" onClick={() => void checkoutReadyHold(hold.id)}>Checkout READY Hold</button>
+                  </>
+                )}
               </p>
             ))}
           </div>
         ) : <p>No hold requests loaded.</p>}
+      </section>
+
+      <section className="card">
+        <h2>Loan History</h2>
+        {loanHistory.length > 0 ? (
+          <div className="borrower-list">
+            {loanHistory.map((loan) => (
+              <p key={loan.loanId}>
+                Loan #{loan.loanId} | Borrower #{loan.borrowerId} | {loan.bookTitle} | Issued: {loan.issueDate.slice(0, 10)} | Due: {loan.dueDate.slice(0, 10)} | Returned: {loan.returnDate ? loan.returnDate.slice(0, 10) : '-'} | Fine paid: {loan.finePaid ? 'Yes' : 'No'}
+              </p>
+            ))}
+          </div>
+        ) : <p>No loan history.</p>}
       </section>
 
       {canManageLoans && (

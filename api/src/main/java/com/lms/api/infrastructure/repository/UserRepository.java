@@ -103,6 +103,62 @@ public class UserRepository {
         );
     }
 
+    public List<UserSummaryRow> listUsers() {
+        return jdbcTemplate.query(
+                "SELECT id, username, full_name, role, active FROM app_user ORDER BY id",
+                (rs, idx) -> new UserSummaryRow(
+                        rs.getInt("id"),
+                        rs.getString("username"),
+                        rs.getString("full_name"),
+                        Role.valueOf(rs.getString("role")),
+                        rs.getBoolean("active")
+                )
+        );
+    }
+
+    public int createUser(String username, String passwordHash, String fullName, Role role, boolean active) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement statement = connection.prepareStatement(
+                    "INSERT INTO app_user (username, password_hash, full_name, role, active) VALUES (?, ?, ?, ?, ?)",
+                    PreparedStatement.RETURN_GENERATED_KEYS
+            );
+            statement.setString(1, username);
+            statement.setString(2, passwordHash);
+            statement.setString(3, fullName);
+            statement.setString(4, role.name());
+            statement.setBoolean(5, active);
+            return statement;
+        }, keyHolder);
+        Number key = keyHolder.getKey();
+        return key == null ? 0 : key.intValue();
+    }
+
+    public void updateUser(int userId, String fullName, Role role, Boolean active) {
+        if (fullName != null) {
+            jdbcTemplate.update("UPDATE app_user SET full_name = ? WHERE id = ?", fullName, userId);
+        }
+        if (role != null) {
+            jdbcTemplate.update("UPDATE app_user SET role = ? WHERE id = ?", role.name(), userId);
+        }
+        if (active != null) {
+            jdbcTemplate.update("UPDATE app_user SET active = ? WHERE id = ?", active.booleanValue(), userId);
+        }
+    }
+
+    public void updatePassword(int userId, String passwordHash) {
+        jdbcTemplate.update("UPDATE app_user SET password_hash = ? WHERE id = ?", passwordHash, userId);
+    }
+
+    public void deleteUser(int userId) {
+        jdbcTemplate.update("DELETE FROM borrower_profile WHERE user_id = ?", userId);
+        jdbcTemplate.update("DELETE FROM hold_request WHERE borrower_user_id = ?", userId);
+        jdbcTemplate.update("DELETE FROM loan WHERE borrower_user_id = ?", userId);
+        jdbcTemplate.update("DELETE FROM loan WHERE issued_by_user_id = ?", userId);
+        jdbcTemplate.update("DELETE FROM loan WHERE returned_by_user_id = ?", userId);
+        jdbcTemplate.update("DELETE FROM app_user WHERE id = ?", userId);
+    }
+
     public int countBorrowers() {
         Integer count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM app_user WHERE role = 'BORROWER'",
@@ -153,5 +209,27 @@ public class UserRepository {
         public String getFullName() { return fullName; }
         public String getAddress() { return address; }
         public String getPhoneNo() { return phoneNo; }
+    }
+
+    public static class UserSummaryRow {
+        private final int id;
+        private final String username;
+        private final String fullName;
+        private final Role role;
+        private final boolean active;
+
+        public UserSummaryRow(int id, String username, String fullName, Role role, boolean active) {
+            this.id = id;
+            this.username = username;
+            this.fullName = fullName;
+            this.role = role;
+            this.active = active;
+        }
+
+        public int getId() { return id; }
+        public String getUsername() { return username; }
+        public String getFullName() { return fullName; }
+        public Role getRole() { return role; }
+        public boolean isActive() { return active; }
     }
 }

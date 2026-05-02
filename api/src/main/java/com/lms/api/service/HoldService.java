@@ -38,7 +38,7 @@ public class HoldService {
 
     public List<HoldRequestDto> getBorrowerHolds(int borrowerId) {
         ensureBorrowerExists(borrowerId);
-        return holdRepository.listActiveHoldsForBorrower(borrowerId)
+        return holdRepository.listHoldsForBorrower(borrowerId)
                 .stream()
                 .map(row -> new HoldRequestDto(
                         row.getId(),
@@ -52,6 +52,26 @@ public class HoldService {
 
     public void cancelHold(int borrowerId, int holdId) {
         holdRepository.cancelHold(holdId, borrowerId);
+    }
+
+    public HoldRepository.HoldRow getHold(int holdId) {
+        HoldRepository.HoldRow hold = holdRepository.findById(holdId);
+        if (hold == null) {
+            throw new NotFoundException("Hold not found: " + holdId);
+        }
+        return hold;
+    }
+
+    public void markReady(int holdId) {
+        holdRepository.updateStatus(holdId, "READY");
+    }
+
+    public void markFulfilled(int holdId) {
+        holdRepository.updateStatus(holdId, "FULFILLED");
+    }
+
+    public HoldRepository.HoldRow findOldestActiveHoldForBook(int bookId) {
+        return holdRepository.findOldestActiveHoldForBook(bookId);
     }
 
     public int countActiveHolds() {

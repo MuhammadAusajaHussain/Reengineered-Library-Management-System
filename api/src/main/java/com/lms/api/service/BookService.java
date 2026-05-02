@@ -2,6 +2,7 @@ package com.lms.api.service;
 
 import com.lms.api.dto.BookDto;
 import com.lms.api.dto.CreateBookRequest;
+import com.lms.api.dto.UpdateBookRequest;
 import com.lms.api.exception.BadRequestException;
 import com.lms.api.exception.NotFoundException;
 import com.lms.api.infrastructure.repository.BookRepository;
@@ -46,6 +47,39 @@ public class BookService {
             throw new NotFoundException("Book creation failed");
         }
         return toDto(row);
+    }
+
+    public BookDto updateBook(int bookId, UpdateBookRequest request) {
+        BookRepository.BookRow existing = bookRepository.findById(bookId);
+        if (existing == null) {
+            throw new NotFoundException("Book not found: " + bookId);
+        }
+
+        int newTotal = request.getTotalCopies();
+        int currentlyIssued = existing.getTotalCopies() - existing.getAvailableCopies();
+        if (newTotal < currentlyIssued) {
+            throw new BadRequestException("totalCopies cannot be less than currently issued copies (" + currentlyIssued + ")");
+        }
+        int newAvailable = newTotal - currentlyIssued;
+
+        bookRepository.update(
+                bookId,
+                request.getIsbn(),
+                request.getTitle().trim(),
+                request.getAuthor().trim(),
+                request.getSubject().trim(),
+                newTotal,
+                newAvailable
+        );
+        BookRepository.BookRow updated = bookRepository.findById(bookId);
+        return toDto(updated);
+    }
+
+    public void deleteBook(int bookId) {
+        if (bookRepository.findById(bookId) == null) {
+            throw new NotFoundException("Book not found: " + bookId);
+        }
+        bookRepository.delete(bookId);
     }
 
     public BookRepository.BookRow getBookById(int bookId) {

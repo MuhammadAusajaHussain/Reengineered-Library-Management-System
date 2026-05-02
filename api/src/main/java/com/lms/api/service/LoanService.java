@@ -1,6 +1,7 @@
 package com.lms.api.service;
 
 import com.lms.api.dto.ActiveLoanDto;
+import com.lms.api.dto.LoanHistoryDto;
 import com.lms.api.dto.LoanActionRequest;
 import com.lms.api.dto.LoanResultDto;
 import com.lms.api.exception.BadRequestException;
@@ -24,11 +25,13 @@ public class LoanService {
     private final UserRepository userRepository;
     private final BookService bookService;
     private final LoanRepository loanRepository;
+    private final HoldService holdService;
 
-    public LoanService(UserRepository userRepository, BookService bookService, LoanRepository loanRepository) {
+    public LoanService(UserRepository userRepository, BookService bookService, LoanRepository loanRepository, HoldService holdService) {
         this.userRepository = userRepository;
         this.bookService = bookService;
         this.loanRepository = loanRepository;
+        this.holdService = holdService;
     }
 
     public LoanResultDto checkoutBook(LoanActionRequest request, int actingStaffId) {
@@ -57,6 +60,17 @@ public class LoanService {
         double fine = computeFine(loan.getDueDate(), LocalDateTime.now());
         loanRepository.closeLoan(loan.getId(), actingStaffId, fine <= 0);
         bookService.incrementAvailability(request.getBookId());
+
+        // Hold fulfillment (simplified): if a copy becomes available, mark the oldest ACTIVE hold as READY
+        // and reserve the copy immediately (available_copies--).
+        BookRepository.BookRow bookAfterReturn = bookService.getBookById(request.getBookId());
+        if (bookAfterReturn.getAvailableCopies() > 0) {
+            com.lms.api.infrastructure.repository.HoldRepository.HoldRow oldestHold = holdService.findOldestActiveHoldForBook(request.getBookId());
+            if (oldestHold != null) {
+                holdService.markReady(oldestHold.getId());
+                bookService.decrementAvailability(request.getBookId());
+            }
+        }
         return new LoanResultDto("Book checked in successfully", fine);
     }
 
@@ -111,6 +125,25 @@ public class LoanService {
 
     public int countOverdueUnpaidLoans() {
         return loanRepository.countOverdueUnpaidLoans(LocalDateTime.now());
+    }
+
+    public List<LoanHistoryDto> getLoanHistory(Integer borrowerId) {
+        return loanRepository.listLoanHistory(borrowerId)
+                .stream()
+                .map(row -> {
+                    BookRepository.BookRow book = bookService.getBookById(row.getBookId());
+                    return new LoanHistoryDto(
+                            row.getId(),
+                            row.getBorrowerId(),
+                            row.getBookId(),
+                            book.getTitle(),
+                            row.getIssueDate().toString(),
+                            row.getDueDate().toString(),
+                            row.getReturnDate() == null ? null : row.getReturnDate().toString(),
+                            row.isFinePaid()
+                    );
+                })
+                .collect(Collectors.toList());
     }
 
     private double computeFine(LocalDateTime dueDate, LocalDateTime returnDate) {

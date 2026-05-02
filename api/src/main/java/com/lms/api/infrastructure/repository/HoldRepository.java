@@ -42,6 +42,54 @@ public class HoldRepository {
         return rows.isEmpty() ? null : rows.get(0);
     }
 
+    public HoldRow findById(int holdId) {
+        List<HoldRow> rows = jdbcTemplate.query(
+                "SELECT id, book_id, borrower_user_id, request_date, status FROM hold_request WHERE id = ?",
+                new Object[]{holdId},
+                (rs, idx) -> new HoldRow(
+                        rs.getInt("id"),
+                        rs.getInt("book_id"),
+                        rs.getInt("borrower_user_id"),
+                        rs.getTimestamp("request_date").toLocalDateTime(),
+                        rs.getString("status")
+                )
+        );
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    public HoldRow findOldestActiveHoldForBook(int bookId) {
+        List<HoldRow> rows = jdbcTemplate.query(
+                "SELECT id, book_id, borrower_user_id, request_date, status FROM hold_request WHERE book_id = ? AND status = 'ACTIVE' ORDER BY request_date ASC",
+                new Object[]{bookId},
+                (rs, idx) -> new HoldRow(
+                        rs.getInt("id"),
+                        rs.getInt("book_id"),
+                        rs.getInt("borrower_user_id"),
+                        rs.getTimestamp("request_date").toLocalDateTime(),
+                        rs.getString("status")
+                )
+        );
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    public List<HoldRow> listHoldsForBorrower(int borrowerId) {
+        return jdbcTemplate.query(
+                "SELECT id, book_id, borrower_user_id, request_date, status FROM hold_request WHERE borrower_user_id = ? ORDER BY request_date DESC",
+                new Object[]{borrowerId},
+                (rs, idx) -> new HoldRow(
+                        rs.getInt("id"),
+                        rs.getInt("book_id"),
+                        rs.getInt("borrower_user_id"),
+                        rs.getTimestamp("request_date").toLocalDateTime(),
+                        rs.getString("status")
+                )
+        );
+    }
+
+    public void updateStatus(int holdId, String status) {
+        jdbcTemplate.update("UPDATE hold_request SET status = ? WHERE id = ?", status, holdId);
+    }
+
     public List<HoldRow> listActiveHoldsForBorrower(int borrowerId) {
         return jdbcTemplate.query(
                 "SELECT id, book_id, borrower_user_id, request_date, status FROM hold_request WHERE borrower_user_id = ? AND status = 'ACTIVE' ORDER BY request_date DESC",

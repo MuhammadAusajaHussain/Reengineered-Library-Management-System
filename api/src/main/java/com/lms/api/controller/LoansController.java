@@ -3,6 +3,7 @@ package com.lms.api.controller;
 import com.lms.api.dto.ActiveLoanDto;
 import com.lms.api.dto.FinePaymentRequest;
 import com.lms.api.dto.LoanActionRequest;
+import com.lms.api.dto.LoanHistoryDto;
 import com.lms.api.dto.LoanResultDto;
 import com.lms.api.domain.Role;
 import com.lms.api.infrastructure.session.SessionUser;
@@ -77,5 +78,15 @@ public class LoansController {
         SessionUser sessionUser = authService.getSessionUser(authorization);
         authService.requireAnyRole(sessionUser, Role.ADMIN, Role.LIBRARIAN, Role.CLERK);
         return loanService.payFine(request.getLoanId());
+    }
+
+    @GetMapping("/history")
+    public List<LoanHistoryDto> history(@RequestHeader(value = "Authorization", required = false) String authorization) {
+        SessionUser sessionUser = authService.getSessionUser(authorization);
+        if (sessionUser.getRole() == Role.BORROWER) {
+            return loanService.getLoanHistory(sessionUser.getUserId());
+        }
+        authService.requireAnyRole(sessionUser, Role.ADMIN, Role.LIBRARIAN, Role.CLERK);
+        return loanService.getLoanHistory(null);
     }
 }
