@@ -137,6 +137,18 @@ public class BookRepository {
         jdbcTemplate.update("DELETE FROM book WHERE id = ?", id);
     }
 
+    public void transferLoans(int sourceBookId, int targetBookId) {
+        jdbcTemplate.update("UPDATE loan SET book_id = ? WHERE book_id = ?", targetBookId, sourceBookId);
+    }
+
+    public void transferHolds(int sourceBookId, int targetBookId) {
+        jdbcTemplate.update("UPDATE hold_request SET book_id = ? WHERE book_id = ?", targetBookId, sourceBookId);
+    }
+
+    public void deleteOnlyBook(int id) {
+        jdbcTemplate.update("DELETE FROM book WHERE id = ?", id);
+    }
+
     public void changeAvailability(int bookId, int delta) {
         jdbcTemplate.update(
                 "UPDATE book SET available_copies = available_copies + ? WHERE id = ?",

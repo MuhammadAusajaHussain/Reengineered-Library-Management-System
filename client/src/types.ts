@@ -57,6 +57,7 @@ export type HoldItem = {
 
 export type DashboardStats = {
   totalBooks: number
+  totalVolumes: number
   activeLoans: number
   overdueUnpaidLoans: number
   activeHolds: number

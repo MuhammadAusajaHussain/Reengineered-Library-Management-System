@@ -36,6 +36,7 @@ export default function CirculationPage(props: Props) {
   return (
     <section className="card">
       <h2>Borrower & Circulation</h2>
+      <br />
       <div className="actions-grid two-columns">
         <select value={borrowerId} onChange={(event) => setBorrowerId(event.target.value)}>
           <option value="">Select Borrower</option>

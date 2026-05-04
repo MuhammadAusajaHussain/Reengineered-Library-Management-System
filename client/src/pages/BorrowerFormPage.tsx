@@ -40,6 +40,7 @@ export default function BorrowerFormPage({ borrowers, onCreate, onUpdate }: Prop
   return (
     <section className="card">
       <h2>{editing ? 'Edit Borrower' : 'Register Borrower'}</h2>
+      <br />
       {editing && !current && <p className="error">Borrower not found in loaded list.</p>}
       <form onSubmit={handleSubmit} className="form-grid">
         {!editing && <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" required />}

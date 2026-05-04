@@ -728,7 +728,6 @@ function App() {
               element={
                 <DashboardPage
                   stats={dashboardStats}
-                  isAdmin={isAdmin}
                   role={user!.role}
                   activeLoans={activeLoans}
                   loanHistory={loanHistory}

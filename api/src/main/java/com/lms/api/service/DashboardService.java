@@ -23,24 +23,26 @@ public class DashboardService {
             // Personal stats for Borrower
             return new DashboardStatsDto(
                     bookService.countBooks(),
+                    bookService.countTotalCopies(),
                     loanService.countActiveLoansForBorrower(borrowerId),
                     loanService.countOverdueUnpaidForBorrower(borrowerId),
                     holdService.countActiveHoldsForBorrower(borrowerId),
-                    0, // totalBorrowers (not relevant for borrower)
-                    0, // totalStaff (not relevant for borrower)
+                    0, // totalBorrowers
+                    0, // totalStaff
                     loanService.countTotalLoansForBorrower(borrowerId)
             );
         }
         
         // General stats for Staff
         return new DashboardStatsDto(
-                bookService.countTotalCopies(),
-                loanService.countActiveBorrowers(), // Number of people with books
+                bookService.countBooks(), // Unique Titles
+                bookService.countTotalCopies(), // All Physical Volumes
+                loanService.countActiveBorrowers(),
                 loanService.countOverdueUnpaidLoans(),
                 holdService.countActiveHolds(),
                 userRepository.countBorrowers(),
                 userRepository.countStaff(),
-                bookService.countBooksCurrentlyOut() // Matches "not in inventory" wording and remains accurate even with holds
+                bookService.countBooksCurrentlyOut()
         );
     }
 }

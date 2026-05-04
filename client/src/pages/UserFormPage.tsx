@@ -36,11 +36,11 @@ export default function UserFormPage({ users, onCreate, onUpdate, onDelete }: Pr
     if (editing && id) {
       await onUpdate(Number(id), { fullName, role, active, password: password || undefined })
     } else {
-      await onCreate({ 
-        username, 
-        password, 
-        fullName, 
-        role, 
+      await onCreate({
+        username,
+        password,
+        fullName,
+        role,
         active,
         address: role === 'BORROWER' ? address : undefined,
         phoneNo: role === 'BORROWER' ? phoneNo : undefined
@@ -58,6 +58,7 @@ export default function UserFormPage({ users, onCreate, onUpdate, onDelete }: Pr
   return (
     <section className="card">
       <h2>{editing ? 'Edit User' : 'Add User'}</h2>
+      <br />
       {editing && !current && <p className="error">User not found in loaded list.</p>}
       <form onSubmit={handleSubmit} className="form-grid">
         {!editing && <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" required />}

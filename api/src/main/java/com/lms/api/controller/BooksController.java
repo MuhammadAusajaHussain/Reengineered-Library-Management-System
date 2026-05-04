@@ -37,6 +37,13 @@ public class BooksController {
         return bookService.getAllBooks();
     }
 
+    @PostMapping("/deduplicate")
+    public void deduplicateBooks(@RequestHeader(value = "Authorization", required = false) String authorization) {
+        SessionUser sessionUser = authService.getSessionUser(authorization);
+        authService.requireAnyRole(sessionUser, Role.ADMIN);
+        bookService.deduplicateCatalog();
+    }
+
     @PostMapping("/search")
     public List<BookDto> searchBooks(@Valid @RequestBody SearchBooksRequest request) {
         return bookService.searchBooks(request.getSearchBy(), request.getQuery());

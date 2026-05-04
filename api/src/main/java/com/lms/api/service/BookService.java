@@ -163,6 +163,57 @@ public class BookService {
         }
     }
 
+    /**
+     * Finds and merges duplicate book entries (matching ISBN or Title+Author).
+     * Transfers loans/holds and sums up copies.
+     */
+    public void deduplicateCatalog() {
+        List<BookRepository.BookRow> allBooks = bookRepository.getAll();
+        java.util.Map<String, BookRepository.BookRow> uniqueBooks = new java.util.HashMap<>();
+        
+        for (BookRepository.BookRow book : allBooks) {
+            String key = (book.getIsbn() != null && !book.getIsbn().isEmpty()) 
+                ? book.getIsbn() 
+                : (book.getTitle().toLowerCase() + "|" + book.getAuthor().toLowerCase());
+            
+            if (uniqueBooks.containsKey(key)) {
+                BookRepository.BookRow target = uniqueBooks.get(key);
+                // Merge current 'book' into 'target'
+                int newTotal = target.getTotalCopies() + book.getTotalCopies();
+                int newAvailable = target.getAvailableCopies() + book.getAvailableCopies();
+                
+                // Update target in DB
+                bookRepository.update(
+                    target.getId(),
+                    target.getIsbn(),
+                    target.getTitle(),
+                    target.getAuthor(),
+                    target.getSubject(),
+                    newTotal,
+                    newAvailable
+                );
+                
+                // Transfer loans and holds (we need methods for this or direct SQL)
+                // Since we don't have direct SQL access here easily without adding to repository,
+                // I'll assume we can use repository methods or add them.
+                // For now, I'll add the necessary methods to BookRepository.
+                transferDataAndRemove(book.getId(), target.getId());
+                
+                // Update local 'target' state for subsequent merges
+                uniqueBooks.put(key, bookRepository.findById(target.getId()));
+            } else {
+                uniqueBooks.put(key, book);
+            }
+        }
+    }
+
+    private void transferDataAndRemove(int sourceId, int targetId) {
+        // Implementation will call repository to move loans/holds and delete source
+        bookRepository.transferLoans(sourceId, targetId);
+        bookRepository.transferHolds(sourceId, targetId);
+        bookRepository.deleteOnlyBook(sourceId); // New method to delete book without deleting merged loans
+    }
+
     private BookDto toDto(BookRepository.BookRow row) {
         return new BookDto(
                 row.getId(),

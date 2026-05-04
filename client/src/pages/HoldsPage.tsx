@@ -12,6 +12,7 @@ export default function HoldsPage({ holds, canManageLoans, isAdmin, checkoutRead
   return (
     <section className="card">
       <h2>Hold Requests</h2>
+      <br />
       <div className="cards-grid">
         {holds.map((hold) => (
           <article key={hold.id} className="entity-card">

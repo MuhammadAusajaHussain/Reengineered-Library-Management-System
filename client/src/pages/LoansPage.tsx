@@ -15,7 +15,7 @@ export default function LoansPage({ userRole, canManageLoans, activeLoans, loanH
   const [showOnlyFines, setShowOnlyFines] = useState(false)
   const isStaff = userRole !== 'BORROWER'
 
-  const filteredHistory = showOnlyFines 
+  const filteredHistory = showOnlyFines
     ? loanHistory.filter(l => !l.finePaid) // If finePaid is false, it means there's an outstanding issue
     : loanHistory
 
@@ -31,10 +31,10 @@ export default function LoansPage({ userRole, canManageLoans, activeLoans, loanH
           <h2>Active Loans</h2>
           <div className="toggle-container">
             <label className="toggle-label">
-              <input 
-                type="checkbox" 
-                checked={showOnlyFines} 
-                onChange={(e) => setShowOnlyFines(e.target.checked)} 
+              <input
+                type="checkbox"
+                checked={showOnlyFines}
+                onChange={(e) => setShowOnlyFines(e.target.checked)}
               />
               Show Only Overdue/Fines
             </label>
@@ -67,6 +67,7 @@ export default function LoansPage({ userRole, canManageLoans, activeLoans, loanH
 
       <section className="card">
         <h2>Loan History</h2>
+        <br />
         <div className="cards-grid">
           {filteredHistory.map((loan) => (
             <article key={loan.loanId} className={`entity-card ${!loan.finePaid ? 'border-danger' : ''}`}>

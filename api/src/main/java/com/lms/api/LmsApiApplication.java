@@ -17,6 +17,9 @@ public class LmsApiApplication {
     @Bean
     public CommandLineRunner repairData(BookService bookService, BookRepository bookRepository, UserRepository userRepository, org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         return args -> {
+            // Deduplicate catalog
+            bookService.deduplicateCatalog();
+
             // Repair book availability
             bookRepository.getAll().forEach(book -> {
                 bookService.repairAvailability(book.getId());

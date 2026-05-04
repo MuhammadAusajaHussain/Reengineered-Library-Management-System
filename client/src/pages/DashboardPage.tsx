@@ -2,13 +2,12 @@ import type { DashboardStats, Role, ActiveLoan, LoanHistory } from '../types'
 
 type Props = {
   stats: DashboardStats | null
-  isAdmin: boolean
   role: Role
   activeLoans: ActiveLoan[]
   loanHistory: LoanHistory[]
 }
 
-export default function DashboardPage({ stats, isAdmin, role, activeLoans, loanHistory }: Props) {
+export default function DashboardPage({ stats, role, activeLoans, loanHistory }: Props) {
   const isBorrower = role === 'BORROWER';
 
   return (
@@ -38,15 +37,13 @@ export default function DashboardPage({ stats, isAdmin, role, activeLoans, loanH
             {!isBorrower ? (
               <>
                 <div className="stats-card">
+                  <span className="value">{stats.totalVolumes}</span>
+                  <span className="label">Total Volumes</span>
+                </div>
+                <div className="stats-card">
                   <span className="value">{stats.totalLoans}</span>
                   <span className="label">Books Currently Out</span>
                 </div>
-                {isAdmin && (
-                  <div className="stats-card">
-                    <span className="value">{stats.totalStaff}</span>
-                    <span className="label">Total Staff</span>
-                  </div>
-                )}
               </>
             ) : (
               <>

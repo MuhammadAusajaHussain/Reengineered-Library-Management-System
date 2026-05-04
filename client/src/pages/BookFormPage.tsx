@@ -50,6 +50,7 @@ export default function BookFormPage({ books, onCreate, onUpdate, onDelete }: Pr
     <section className="card">
       <h2>{editing ? 'Edit Book' : 'Add Book'}</h2>
       {editing && !current && <p className="error">Book not found in loaded catalog. Go back and refresh books.</p>}
+      <br />
       <form onSubmit={handleSubmit} className="form-grid">
         <input value={isbn} onChange={(e) => setIsbn(e.target.value)} placeholder="ISBN (optional)" />
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" required />
