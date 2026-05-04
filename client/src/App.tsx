@@ -368,6 +368,7 @@ function App() {
       await loadAllBooks()
       await loadBorrower()
       await loadActiveLoans()
+      await loadLoanHistory()
       await loadDashboardStats()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -729,7 +730,7 @@ function App() {
                   stats={dashboardStats}
                   isAdmin={isAdmin}
                   role={user!.role}
-                  activeLoans={loanHistory.filter(l => !l.returnDate)}
+                  activeLoans={activeLoans}
                   loanHistory={loanHistory}
                 />
               }
