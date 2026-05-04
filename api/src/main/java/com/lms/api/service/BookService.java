@@ -131,6 +131,14 @@ public class BookService {
         return bookRepository.countBooks();
     }
 
+    public int countTotalCopies() {
+        return bookRepository.countTotalCopies();
+    }
+
+    public int countBooksCurrentlyOut() {
+        return bookRepository.countBooksCurrentlyOut();
+    }
+
     /**
      * Repairs the available_copies for a book by matching it to (total_copies - active_loans).
      * This fixes data inconsistencies caused by deleting users who had active loans.

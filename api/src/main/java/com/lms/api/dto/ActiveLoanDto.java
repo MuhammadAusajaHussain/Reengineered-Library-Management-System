@@ -3,15 +3,17 @@ package com.lms.api.dto;
 public class ActiveLoanDto {
     private final int loanId;
     private final int borrowerId;
+    private final String borrowerName;
     private final int bookId;
     private final String bookTitle;
     private final String dueDate;
     private final double pendingFine;
     private final boolean finePaid;
 
-    public ActiveLoanDto(int loanId, int borrowerId, int bookId, String bookTitle, String dueDate, double pendingFine, boolean finePaid) {
+    public ActiveLoanDto(int loanId, int borrowerId, String borrowerName, int bookId, String bookTitle, String dueDate, double pendingFine, boolean finePaid) {
         this.loanId = loanId;
         this.borrowerId = borrowerId;
+        this.borrowerName = borrowerName;
         this.bookId = bookId;
         this.bookTitle = bookTitle;
         this.dueDate = dueDate;
@@ -21,6 +23,7 @@ public class ActiveLoanDto {
 
     public int getLoanId() { return loanId; }
     public int getBorrowerId() { return borrowerId; }
+    public String getBorrowerName() { return borrowerName; }
     public int getBookId() { return bookId; }
     public String getBookTitle() { return bookTitle; }
     public String getDueDate() { return dueDate; }

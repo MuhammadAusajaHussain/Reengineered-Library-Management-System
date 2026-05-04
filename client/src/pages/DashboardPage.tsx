@@ -23,7 +23,7 @@ export default function DashboardPage({ stats, isAdmin, role, activeLoans, loanH
             </div>
             <div className="stats-card">
               <span className="value">{stats.activeLoans}</span>
-              <span className="label">{isBorrower ? 'My Active Loans' : 'Active Loans'}</span>
+              <span className="label">{isBorrower ? 'My Active Loans' : 'Active Borrowers'}</span>
             </div>
             <div className="stats-card">
               <span className="value">{stats.overdueUnpaidLoans}</span>
@@ -38,7 +38,7 @@ export default function DashboardPage({ stats, isAdmin, role, activeLoans, loanH
               <>
                 <div className="stats-card">
                   <span className="value">{stats.totalLoans}</span>
-                  <span className="label">Total Books Borrowed</span>
+                  <span className="label">Books Currently Out</span>
                 </div>
                 {isAdmin && (
                   <div className="stats-card">

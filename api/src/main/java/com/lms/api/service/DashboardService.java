@@ -34,13 +34,13 @@ public class DashboardService {
         
         // General stats for Staff
         return new DashboardStatsDto(
-                bookService.countBooks(),
-                loanService.countActiveLoans(),
+                bookService.countTotalCopies(),
+                loanService.countActiveBorrowers(), // Number of people with books
                 loanService.countOverdueUnpaidLoans(),
                 holdService.countActiveHolds(),
                 userRepository.countBorrowers(),
                 userRepository.countStaff(),
-                loanService.countTotalLoans()
+                bookService.countBooksCurrentlyOut() // Matches "not in inventory" wording and remains accurate even with holds
         );
     }
 }

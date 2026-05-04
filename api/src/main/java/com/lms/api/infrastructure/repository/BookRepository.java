@@ -149,6 +149,16 @@ public class BookRepository {
         return count == null ? 0 : count.intValue();
     }
 
+    public int countTotalCopies() {
+        Integer sum = jdbcTemplate.queryForObject("SELECT SUM(total_copies) FROM book", Integer.class);
+        return sum == null ? 0 : sum.intValue();
+    }
+
+    public int countBooksCurrentlyOut() {
+        Integer sum = jdbcTemplate.queryForObject("SELECT SUM(total_copies - available_copies) FROM book", Integer.class);
+        return sum == null ? 0 : sum.intValue();
+    }
+
     public static class BookRow {
         private final int id;
         private final String isbn;

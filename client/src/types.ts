@@ -38,6 +38,7 @@ export type ManagedUser = {
 export type ActiveLoan = {
   loanId: number
   borrowerId: number
+  borrowerName: string
   bookId: number
   bookTitle: string
   dueDate: string
@@ -67,6 +68,7 @@ export type DashboardStats = {
 export type LoanHistory = {
   loanId: number
   borrowerId: number
+  borrowerName: string
   bookId: number
   bookTitle: string
   issueDate: string

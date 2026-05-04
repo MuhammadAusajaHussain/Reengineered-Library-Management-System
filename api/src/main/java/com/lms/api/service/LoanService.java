@@ -93,10 +93,13 @@ public class LoanService {
 
         return rows.stream().map(row -> {
             BookRepository.BookRow book = bookService.getBookById(row.getBookId());
+            UserRepository.UserRow user = userRepository.findById(row.getBorrowerId());
+            String borrowerName = (user != null) ? user.getFullName() : "Unknown";
             double pendingFine = computeFine(row.getDueDate(), LocalDateTime.now());
             return new ActiveLoanDto(
                     row.getId(),
                     row.getBorrowerId(),
+                    borrowerName,
                     row.getBookId(),
                     book.getTitle(),
                     row.getDueDate().toString(),
@@ -143,14 +146,21 @@ public class LoanService {
         return loanRepository.countOverdueUnpaidForBorrower(borrowerId, LocalDateTime.now());
     }
 
+    public int countActiveBorrowers() {
+        return loanRepository.countActiveBorrowers();
+    }
+
     public List<LoanHistoryDto> getLoanHistory(Integer borrowerId) {
         return loanRepository.listLoanHistory(borrowerId)
                 .stream()
                 .map(row -> {
                     BookRepository.BookRow book = bookService.getBookById(row.getBookId());
+                    UserRepository.UserRow user = userRepository.findById(row.getBorrowerId());
+                    String borrowerName = (user != null) ? user.getFullName() : "Unknown";
                     return new LoanHistoryDto(
                             row.getId(),
                             row.getBorrowerId(),
+                            borrowerName,
                             row.getBookId(),
                             book.getTitle(),
                             row.getIssueDate().toString(),

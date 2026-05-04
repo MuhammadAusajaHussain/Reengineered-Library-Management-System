@@ -148,6 +148,14 @@ public class LoanRepository {
         return count == null ? 0 : count.intValue();
     }
 
+    public int countActiveBorrowers() {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(DISTINCT borrower_user_id) FROM loan WHERE return_date IS NULL",
+                Integer.class
+        );
+        return count == null ? 0 : count.intValue();
+    }
+
     public int countTotalLoansForBorrower(int borrowerId) {
         Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM loan WHERE borrower_user_id = ?", Integer.class, borrowerId);
         return count == null ? 0 : count.intValue();

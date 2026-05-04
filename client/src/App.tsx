@@ -130,6 +130,7 @@ function App() {
       const response = await fetch('/api/books', {
         headers: authHeaders(),
       })
+      if (response.status === 401) return logout()
       if (!response.ok) throw new Error('Failed to load books')
       const data: Book[] = await response.json()
       setBooks(data)
@@ -154,6 +155,7 @@ function App() {
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ searchBy, query }),
       })
+      if (response.status === 401) return logout()
       if (!response.ok) throw new Error('Search request failed')
       const data: Book[] = await response.json()
       setBooks(data)
@@ -173,6 +175,7 @@ function App() {
       const response = await fetch(`/api/borrowers/${borrowerId}`, {
         headers: authHeaders(),
       })
+      if (response.status === 401) return logout()
       if (!response.ok) throw new Error('Borrower not found')
       const data: Borrower = await response.json()
       setBorrower(data)
@@ -217,6 +220,7 @@ function App() {
       const response = await fetch('/api/dashboard/stats', {
         headers: authHeaders(),
       })
+      if (response.status === 401) return logout()
       if (!response.ok) return
       const data: DashboardStats = await response.json()
       setDashboardStats(data)
@@ -249,11 +253,11 @@ function App() {
     }
   }
 
-  async function createUser(payload: { 
-    username: string; 
-    password: string; 
-    fullName: string; 
-    role: Role; 
+  async function createUser(payload: {
+    username: string;
+    password: string;
+    fullName: string;
+    role: Role;
     active: boolean;
     address?: string;
     phoneNo?: string;
@@ -353,6 +357,7 @@ function App() {
         }),
       })
 
+      if (response.status === 401) return logout()
       if (!response.ok) {
         const payload = await response.json().catch(() => null)
         throw new Error(payload?.error ?? `Failed to ${action} book`)
@@ -453,7 +458,7 @@ function App() {
       const isStaff = user?.role === 'ADMIN' || user?.role === 'LIBRARIAN' || user?.role === 'CLERK'
       // For staff, we use the /all endpoint. For borrowers, we use the borrowerId query param.
       const url = isStaff ? '/api/holds/all' : `/api/holds?borrowerId=${Number(borrowerId)}`
-      
+
       if (!isStaff && !borrowerId) return
 
       const response = await fetch(url, {
@@ -717,24 +722,24 @@ function App() {
 
         <Routes>
           {canSeeDashboard && (
-            <Route 
-              path="/dashboard" 
+            <Route
+              path="/dashboard"
               element={
-                <DashboardPage 
-                  stats={dashboardStats} 
-                  isAdmin={isAdmin} 
-                  role={user!.role} 
-                  activeLoans={loanHistory.filter(l => !l.returnDate)} 
-                  loanHistory={loanHistory} 
+                <DashboardPage
+                  stats={dashboardStats}
+                  isAdmin={isAdmin}
+                  role={user!.role}
+                  activeLoans={loanHistory.filter(l => !l.returnDate)}
+                  loanHistory={loanHistory}
                 />
-              } 
+              }
             />
           )}
           <Route path="/books" element={<BooksPage books={books} canManageBooks={canManageBooks} loading={loading} searchBy={searchBy} query={query} onSearchByChange={setSearchBy} onQueryChange={setQuery} onSearchSubmit={onSearchSubmit} onReset={() => void loadAllBooks()} />} />
           {canManageBooks && <Route path="/books/new" element={<BookFormPage books={books} onCreate={createBook} onUpdate={updateBook} onDelete={deleteBook} />} />}
           {canManageBooks && <Route path="/books/:id/edit" element={<BookFormPage books={books} onCreate={createBook} onUpdate={updateBook} onDelete={deleteBook} />} />}
           {canManageLoans && <Route path="/circulation" element={<CirculationPage borrower={borrower} borrowerId={borrowerId} bookId={bookId} canManageLoans={canManageLoans} setBorrowerId={setBorrowerId} setBookId={setBookId} loadBorrower={loadBorrower} loadHolds={loadHolds} processLoan={processLoan} renewLoan={renewLoan} placeHold={placeHold} borrowers={borrowers} books={books} />} />}
-          <Route path="/loans" element={<LoansPage canManageLoans={canManageLoans} activeLoans={activeLoans} loanHistory={loanHistory} fineLoanId={fineLoanId} setFineLoanId={setFineLoanId} payFine={payFine} />} />
+          <Route path="/loans" element={<LoansPage userRole={user.role} canManageLoans={canManageLoans} activeLoans={activeLoans} loanHistory={loanHistory} fineLoanId={fineLoanId} setFineLoanId={setFineLoanId} payFine={payFine} />} />
           <Route path="/holds" element={<HoldsPage holds={holds} canManageLoans={canManageLoans} isAdmin={isAdmin} checkoutReadyHold={checkoutReadyHold} onDeleteHold={deleteHold} />} />
           {canManageLoans && <Route path="/borrowers" element={<BorrowersPage borrowers={borrowers} isAdmin={isAdmin} onDelete={deleteBorrower} />} />}
           {canManageLoans && <Route path="/borrowers/new" element={<BorrowerFormPage borrowers={borrowers} onCreate={createBorrower} onUpdate={updateBorrower} />} />}
