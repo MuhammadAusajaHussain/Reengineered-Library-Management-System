@@ -19,6 +19,7 @@ export default function LoginPage({ username, password, loading, error, setUsern
       </header>
       <section className="card">
         <h2>Login</h2>
+        <br />
         <form onSubmit={login} className="search-form">
           <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" />
           <input value={password} type="password" onChange={(e) => setPassword(e.target.value)} placeholder="Password" />

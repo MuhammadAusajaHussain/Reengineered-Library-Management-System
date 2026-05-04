@@ -15,6 +15,7 @@ export default function DashboardPage({ stats, isAdmin, role, activeLoans, loanH
     <div className="dashboard-container">
       <section className="card">
         <h2>{isBorrower ? 'My Activity' : 'Dashboard'}</h2>
+        <br />
         {stats ? (
           <div className="stats-grid">
             <div className="stats-card">
