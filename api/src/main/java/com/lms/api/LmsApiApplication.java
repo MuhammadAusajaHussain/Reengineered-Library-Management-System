@@ -14,14 +14,24 @@ public class LmsApiApplication {
         SpringApplication.run(LmsApiApplication.class, args);
     }
 
+    private com.lms.api.dto.CreateBookRequest createReq(String isbn, String title, String author, String subject, int copies) {
+        com.lms.api.dto.CreateBookRequest req = new com.lms.api.dto.CreateBookRequest();
+        req.setIsbn(isbn);
+        req.setTitle(title);
+        req.setAuthor(author);
+        req.setSubject(subject);
+        req.setCopies(copies);
+        return req;
+    }
+
     @Bean
     public CommandLineRunner repairData(BookService bookService, BookRepository bookRepository, UserRepository userRepository, org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         return args -> {
             // Bootstrap books if none exist
             if (bookRepository.countBooks() == 0) {
-                bookService.createBook(new com.lms.api.dto.CreateBookRequest("9780134685991", "Effective Java", "Joshua Bloch", "Programming", 3));
-                bookService.createBook(new com.lms.api.dto.CreateBookRequest("9780132350884", "Clean Code", "Robert C. Martin", "Programming", 2));
-                bookService.createBook(new com.lms.api.dto.CreateBookRequest("9781492056270", "Designing Data-Intensive Applications", "Martin Kleppmann", "Systems", 1));
+                bookService.createBook(createReq("9780134685991", "Effective Java", "Joshua Bloch", "Programming", 3));
+                bookService.createBook(createReq("9780132350884", "Clean Code", "Robert C. Martin", "Programming", 2));
+                bookService.createBook(createReq("9781492056270", "Designing Data-Intensive Applications", "Martin Kleppmann", "Systems", 1));
             }
 
             // Deduplicate catalog
