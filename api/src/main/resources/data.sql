@@ -8,8 +8,9 @@ VALUES
 INSERT INTO borrower_profile (user_id, address, phone_no)
 VALUES (4, 'FAST Library Town', '0300-0000000');
 
-INSERT INTO book (isbn, title, author, subject, total_copies, available_copies)
-VALUES
-('9780134685991', 'Effective Java', 'Joshua Bloch', 'Programming', 3, 3),
-('9780132350884', 'Clean Code', 'Robert C. Martin', 'Programming', 2, 2),
-('9781492056270', 'Designing Data-Intensive Applications', 'Martin Kleppmann', 'Systems', 1, 1);
+-- Book insertion moved to programmatic bootstrap in LmsApiApplication.java to prevent duplication on restart
+-- INSERT INTO book (isbn, title, author, subject, total_copies, available_copies)
+-- VALUES
+-- ('9780134685991', 'Effective Java', 'Joshua Bloch', 'Programming', 3, 3),
+-- ('9780132350884', 'Clean Code', 'Robert C. Martin', 'Programming', 2, 2),
+-- ('9781492056270', 'Designing Data-Intensive Applications', 'Martin Kleppmann', 'Systems', 1, 1);

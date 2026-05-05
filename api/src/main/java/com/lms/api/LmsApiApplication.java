@@ -17,6 +17,13 @@ public class LmsApiApplication {
     @Bean
     public CommandLineRunner repairData(BookService bookService, BookRepository bookRepository, UserRepository userRepository, org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         return args -> {
+            // Bootstrap books if none exist
+            if (bookRepository.countBooks() == 0) {
+                bookService.createBook(new com.lms.api.dto.CreateBookRequest("9780134685991", "Effective Java", "Joshua Bloch", "Programming", 3));
+                bookService.createBook(new com.lms.api.dto.CreateBookRequest("9780132350884", "Clean Code", "Robert C. Martin", "Programming", 2));
+                bookService.createBook(new com.lms.api.dto.CreateBookRequest("9781492056270", "Designing Data-Intensive Applications", "Martin Kleppmann", "Systems", 1));
+            }
+
             // Deduplicate catalog
             bookService.deduplicateCatalog();
 
