@@ -45,12 +45,12 @@ export default function LoansPage({ userRole, canManageLoans, activeLoans, loanH
           <select value={fineLoanId} onChange={(e) => setFineLoanId(e.target.value)}>
             <option value="">Select Loan to Pay Fine</option>
             {activeLoans.filter(l => l.pendingFine > 0).map(l => (
-              <option key={l.loanId} value={l.loanId}>Loan #{l.loanId} - {l.bookTitle} (Rs {l.pendingFine})</option>
+              <option key={l.loanId} value={l.loanId}>Loan #{l.loanId} - {l.bookTitle} borrowed by {l.borrowerName} (Fine: {l.pendingFine})</option>
             ))}
           </select>
           {canManageLoans && <button type="button" onClick={() => void payFine()}>Mark Fine Paid</button>}
         </div>
-
+        <br />
         <div className="cards-grid">
           {filteredActive.map((loan) => (
             <article key={loan.loanId} className={`entity-card ${loan.pendingFine > 0 ? 'border-warning' : ''}`}>
