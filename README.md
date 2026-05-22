@@ -188,3 +188,131 @@ See the `docs/` folder for:
 - `setup.md` — environment setup and configuration notes
 
 These documents map the implemented changes to reengineering and refactoring concepts from the course material.
+
+---
+
+## User Interface
+
+### 1. Login Page
+![Login Page](<UI Images/Login Page.jpg>)
+
+### 2. Admin Pages
+**i. Dashboard Page**
+![Admin Dashboard](<UI Images/Admin/1.1 Admin Dashboard.jpg>)
+
+**ii. Books Page**
+![Admin Books Page](<UI Images/Admin/1.2 Admin Books Page.jpg>)
+
+**iii. Add Book Page**
+![Admin Add Book Page](<UI Images/Admin/1.3 Admin Add Book Page.jpg>)
+
+**iv. Edit Book Page**
+![Admin Edit Book](<UI Images/Admin/1.4 Admin Edit Book.jpg>)
+
+**v. Circulation Page**
+![Admin Circulation Page](<UI Images/Admin/1.5 Admin Circulation Page.jpg>)
+
+**vi. Loan Page**
+![Admin Loan Page](<UI Images/Admin/1.6 Admin Loan Page.jpg>)
+
+**vii. Holds Page**
+![Admin Holds Page](<UI Images/Admin/1.7 Admin Holds Page.jpg>)
+
+**viii. Borrowers Page**
+![Admin Borrowers Page](<UI Images/Admin/1.8 Admin Borrowers Page.jpg>)
+
+**ix. Register Borrowers Page**
+![Admin Register Borrowers](<UI Images/Admin/1.9 Admin Register Borrowers.jpg>)
+
+**x. User Management Page**
+![Admin User Management Page](<UI Images/Admin/1.10 Admin User Management Page.jpg>)
+
+**xi. Add User Page** 
+![Admin Add User](<UI Images/Admin/1.11 Admin Add User.jpg>)
+
+**xii. Edit User Page** 
+![Admin Edit User](<UI Images/Admin/1.12 Admin Edit User.jpg>)
+
+### 3. Librarian Pages
+**i. Dashboard Page**
+![Librarian Dashboard](<UI Images/Librarian/2.1 Librarian Dashboard.jpg>)
+
+**ii. Books Page**
+![Librarian Books Page](<UI Images/Librarian/2.2 Librarian Books Page.jpg>)
+
+**iii. Add Book Page**
+![Librarian Add Book Page](<UI Images/Librarian/2.3 Librarian Add Book Page.jpg>)
+
+**iv. Edit Book Page**
+![Librarian Edit Book Page](<UI Images/Librarian/2.4 Librarian Edit Book Page.jpg>)
+
+**v. Circulation Page**
+![Librarian Circulation Page](<UI Images/Librarian/2.5 Librarian Circulation Page.jpg>)
+
+**vi. Loans Page**
+![Librarian Loans Page](<UI Images/Librarian/2.6 Librarian Loans Page.jpg>)
+
+**vii. Holds Page**
+![Librarian Holds Page](<UI Images/Librarian/2.7 Librarian Holds Page.jpg>)
+
+**viii. Borrowers Page**
+![Librarian Borrowers Page](<UI Images/Librarian/2.8 Librarian Borrowers Page.jpg>) 
+
+**ix. Add Borrower Page**
+![Librarian Add Borrower Page](<UI Images/Librarian/2.9 Librarian Add Borrower.jpg>)
+
+**x. Edit Borrower Page**
+![Librarian Edit Borrower Page](<UI Images/Librarian/2.10 Librarian Edit Borrower.jpg>)
+
+### 4. Clerk Pages
+**i. Dashboard Page**
+![Clerk Dashboard](<UI Images/Clerk/3.1 Clerk Dashboard.jpg>) 
+
+**ii. Books Page**
+![Clerk Books Page](<UI Images/Clerk/3.2 Clerk Books Page.jpg>) 
+
+**iii. Circulation Page**
+![Clerk Circulation Page](<UI Images/Clerk/3.3 Clerk Circulation Page.jpg>) 
+
+**iv. Loans Page**
+![Clerk Loans Page](<UI Images/Clerk/3.4 Clerk Loans Page.jpg>) 
+
+**v. Holds Page**
+![Clerk Holds Page](<UI Images/Clerk/3.5 Clerk Holds Page.jpg>) 
+
+**vi. Borrowers Page**
+![Clerk Borrowers Page](<UI Images/Clerk/3.6 Clerk Borrowers Page.jpg>) 
+
+**vii. Add Borrower Page**
+![Clerk Add Borrower](<UI Images/Clerk/3.7 Clerk Add Borrower.jpg>) 
+
+**viii. Edit Borrower Page**
+![Clerk Edit Borrower](<UI Images/Clerk/3.8 Clerk Edit Borrower.jpg>)
+
+### 5. Borrower Pages
+**i. Dashboard Page**
+![Borrower Dashboard](<UI Images/Borrower/4.1 Borrower Dashboard.jpg>)
+
+**ii. Books Page**
+![Borrower Books Page](<UI Images/Borrower/4.2 Borrower Books Page.jpg>)
+
+**iii. Loans Page**
+![Borrower Loans Page](<UI Images/Borrower/4.3 Borrower Loans Page.jpg>) 
+
+**iv. Holds Page**
+![Borrower Holds Page](<UI Images/Borrower/4.4 Borrower Holds Page.jpg>)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

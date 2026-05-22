@@ -25,9 +25,9 @@ export default function BorrowersPage({ borrowers, isAdmin, onDelete }: Props) {
             <p><strong>Borrowed:</strong> {item.borrowedBooksCount}</p>
             <p><strong>Holds:</strong> {item.onHoldBooksCount}</p>
             <div className="card-actions">
-              <Link className="btn-link" to={`/borrowers/${item.id}/edit`}>Edit Borrower</Link>
+              <Link className="btn-link" to={`/borrowers/${item.id}/edit`}>Edit</Link>
               {isAdmin && (
-                <button type="button" className="btn-danger" onClick={() => void onDelete(item.id)}>Delete Borrower</button>
+                <button type="button" className="btn-danger" onClick={() => void onDelete(item.id)}>Delete</button>
               )}
             </div>
           </article>
